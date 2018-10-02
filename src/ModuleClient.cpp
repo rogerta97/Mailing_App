@@ -227,6 +227,8 @@ void ModuleClient::updateGUI()
 				ImGui::PopID();
 			}
 		}
+		else if (messengerState == MessengerState::ReceivingMessages)
+			ImGui::Text("Waiting For Messages..."); 
 	}
 
 	ImGui::End();
