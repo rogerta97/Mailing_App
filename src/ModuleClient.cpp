@@ -66,14 +66,17 @@ void ModuleClient::updateMessenger()
 void ModuleClient::onPacketReceived(const InputMemoryStream & stream)
 {
 	PacketType packetType;
-	stream.Read(packetType);
 
-	LOG("onPacketReceived() - packetType: %d", (int)packetType);
+	int packet_t = -1;
+	stream.Read<int>(packet_t);
+
+	packetType = (PacketType)packet_t;
 	
 	switch (packetType)
 	{
 	case PacketType::QueryAllMessagesResponse:
 		onPacketReceivedQueryAllMessagesResponse(stream);
+		LOG("onPacketReceived() - packetType: QueryAllMessagesResponse");
 		break;
 	default:
 		LOG("Unknown packet type received");
@@ -104,7 +107,7 @@ void ModuleClient::sendPacketLogin(const char * username)
 {
 	OutputMemoryStream stream;
 
-	stream.Write<int>((int)PacketType::QueryAllMessagesRequest);
+	stream.Write<int>((int)PacketType::LoginRequest);
 	stream.Write(std::string(username));
 	sendPacket(stream);
 
@@ -126,7 +129,7 @@ void ModuleClient::sendPacketSendMessage(const char * receiver, const char * sub
 	OutputMemoryStream stream;
 
 	stream.Write<int>((int)PacketType::SendMessageRequest);
-	stream.Write(std::string(subjectBuf));
+	stream.Write(std::string(senderBuf));
 	stream.Write(std::string(receiver));
 	stream.Write(std::string(subject));
 	stream.Write(std::string(message));

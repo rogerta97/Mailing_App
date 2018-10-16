@@ -62,19 +62,21 @@ void ModuleServer::onPacketReceived(SOCKET socket, const InputMemoryStream & str
 	int packet_t = -1;
 	stream.Read<int>(packet_t);
 
-	LOG("onPacketReceived() - packetType: %d", packet_t);
 	packetType = (PacketType)packet_t;
 
 	switch (packetType)
 	{
 	case PacketType::LoginRequest:
 		onPacketReceivedLogin(socket, stream);
+		LOG("onPacketReceived() - packetType: LoginRequest");
 		break;
 	case PacketType::QueryAllMessagesRequest:
 		onPacketReceivedQueryAllMessages(socket, stream);
+		LOG("onPacketReceived() - packetType: QueryAllMessagesRequest");
 		break;
 	case PacketType::SendMessageRequest:
 		onPacketReceivedSendMessage(socket, stream);
+		LOG("onPacketReceived() - packetType: SendMessageRequest");
 		break;
 	default:
 		LOG("Unknown packet type received");
