@@ -167,7 +167,7 @@ void ModuleClient::updateGUI()
 			ImGui::InputText("IP", ipBuffer, sizeof(ipBuffer));
 
 			// Port
-			static int port = 8000;
+			static int port = 3306;
 			ImGui::InputInt("Port", &port);
 
 			// Connect button

@@ -39,12 +39,10 @@ void MySqlDatabaseGateway::insertMessage(const Message & message)
 	if (db.isConnected())
 	{
 		DBResultSet res;
-
-		std::string sqlStatement;
-		// TODO: Create the SQL statement to insert the passed message into the DB (INSERT)
-
+		
 		// insert some messages
-		db.sql(sqlStatement.c_str());
+		db.sql(stringFormat("INSERT INTO messages VALUES('%s', '%s', '%s', '%s')",
+			message.senderUsername.c_str(), message.receiverUsername.c_str(), message.subject.c_str(), message.body.c_str()).c_str());
 	}
 }
 
@@ -57,10 +55,9 @@ std::vector<Message> MySqlDatabaseGateway::getAllMessagesReceivedByUser(const st
 	if (db.isConnected())
 	{
 		std::string sqlStatement;
-		// TODO: Create the SQL statement to query all messages from the given user (SELECT)
-
+		
 		// consult all messages
-		DBResultSet res = db.sql(sqlStatement.c_str());
+		DBResultSet res = db.sql(stringFormat("select* from messages where(sender = '%s')", username.c_str()).c_str());
 
 		// fill the array of messages
 		for (auto & messageRow : res.rows)

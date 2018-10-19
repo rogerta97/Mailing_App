@@ -8,9 +8,9 @@
 
 #define DB_SERVER   "localhost"
 #define DB_PORT     "3306"
-#define DB_NAME     "dbname"
-#define DB_USERNAME "username"
-#define DB_USERPASS "password"
+#define DB_NAME     "mailing_app"
+#define DB_USERNAME "rodrigo"
+#define DB_USERPASS "rodrigodpl"
 
 
 typedef std::string DBResultColumn;
