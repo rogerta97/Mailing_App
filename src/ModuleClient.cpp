@@ -2,6 +2,8 @@
 #include "Log.h"
 #include "imgui/imgui.h"
 #include "serialization/PacketTypes.h"
+#include "Application.h"
+#include "ModuleServer.h"
 
 #define HEADER_SIZE sizeof(uint32_t)
 #define RECV_CHUNK_SIZE 4096
@@ -12,15 +14,15 @@ bool ModuleClient::update()
 
 	switch (state)
 	{
-	case ModuleClient::ClientState::Connecting:
+	case ClientState::Connecting:
 		connectToServer();
 		break;
-	case ModuleClient::ClientState::Connected:
+	case ClientState::Connected:
 		handleIncomingData();
 		updateMessenger();
 		handleOutgoingData();
 		break;
-	case ModuleClient::ClientState::Disconnecting:
+	case ClientState::Disconnecting:
 		disconnectFromServer();
 		break;
 	default:
@@ -157,7 +159,6 @@ void ModuleClient::updateGUI()
 {
 	ImGui::Begin("Client Window");
 
-
 	if (state == ClientState::Disconnected)
 	{
 		if (ImGui::CollapsingHeader("Server data", ImGuiTreeNodeFlags_DefaultOpen))
@@ -258,19 +259,20 @@ void ModuleClient::connectToServer()
 	// Connect
 	sockaddr_in serverAddr;
 	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(serverPort);
-	inet_pton(AF_INET, serverIP, &serverAddr.sin_addr);
+	serverAddr.sin_port = htons(App->modServer->port);
+	inet_pton(AF_INET, App->modServer->serverIP, &serverAddr.sin_addr);
 	int res = connect(connSocket, (const sockaddr*)&serverAddr, sizeof(serverAddr));
 	if (res == SOCKET_ERROR)
-	{
+	{/*
 		printWSError("connect()");
-		LOG("Could not connect to the server %s:%d", serverIP, serverPort);
-		state = ClientState::Disconnecting;
+		LOG("Could not connect to the server %s:%d", App->modServer->serverIP, App->modServer->port);
+		state = ClientState::Disconnecting;*/
+		
 	}
 	else
 	{
 		state = ClientState::Connected;
-		LOG("Server connected to %s:%d", serverIP, serverPort);
+		LOG("Server connected to %s:%d", App->modServer->serverIP, App->modServer->port);
 
 		messengerState = MessengerState::SendingLogin;
 	}
@@ -280,9 +282,10 @@ void ModuleClient::connectToServer()
 	res = ioctlsocket(connSocket, FIONBIO, &nonBlocking);
 	if (res == SOCKET_ERROR) {
 		printWSError("ioctlsocket() non-blocking");
-		LOG("Could not set the socket in non-blocking mode.", serverIP, serverPort);
+		LOG("Could not set the socket in non-blocking mode.", App->modServer->serverIP, App->modServer->port);
 		state = ClientState::Disconnecting;
 	}
+
 }
 
 void ModuleClient::disconnectFromServer()

@@ -57,7 +57,7 @@ std::vector<Message> MySqlDatabaseGateway::getAllMessagesReceivedByUser(const st
 		std::string sqlStatement;
 		
 		// consult all messages
-		DBResultSet res = db.sql(stringFormat("select* from messages where(sender = '%s')", username.c_str()).c_str());
+		DBResultSet res = db.sql(stringFormat("select* from messages where(receiver = '%s')", username.c_str()).c_str());
 
 		// fill the array of messages
 		for (auto & messageRow : res.rows)

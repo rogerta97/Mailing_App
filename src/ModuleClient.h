@@ -5,6 +5,18 @@
 #include "database/DatabaseTypes.h"
 #include "serialization/MemoryStream.h"
 
+
+// Client connection state
+enum class ClientState
+{
+	Disconnected,
+	WaitingConnection,
+	Connecting,
+	Connected,
+	Disconnecting
+};
+
+
 class ModuleClient : public Module
 {
 public:
@@ -14,6 +26,11 @@ public:
 	bool update() override;
 
 	bool cleanUp() override;
+
+public:
+
+	// State of the client
+	ClientState state = ClientState::Connecting;
 
 private:
 
@@ -48,25 +65,6 @@ private:
 	void handleIncomingData();
 
 	void handleOutgoingData();
-
-
-	// Client connection state
-	enum class ClientState
-	{
-		Disconnected,
-		Connecting,
-		Connected,
-		Disconnecting
-	};
-
-	// State of the client
-	ClientState state = ClientState::Disconnected;
-
-	// IP address of the server
-	char serverIP[32] = "127.0.0.1";
-
-	// Port used by the server
-	int serverPort = 8000;
 
 	// Socket to connect to the server
 	SOCKET connSocket;

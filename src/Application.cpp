@@ -25,6 +25,7 @@ Application::Application()
 	modWindow->setActive(true);
 	modMainMenu->setActive(true);
 	modLogView->setActive(true);
+	modClient->setActive(true);
 }
 
 

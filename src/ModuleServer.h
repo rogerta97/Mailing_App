@@ -5,6 +5,17 @@
 #include "serialization/MemoryStream.h"
 #include <list>
 
+// Data members
+
+enum class ServerState
+{
+	Off,
+	Starting,
+	Running,
+	Stopping
+};
+
+
 class IDatabaseGateway;
 
 class ModuleServer : public Module
@@ -24,6 +35,18 @@ public:
 
 	bool cleanUp() override;
 
+public:
+
+	// Server state
+	ServerState state = ServerState::Off;
+
+	// Application port
+	int port = 8000;
+
+	// IP address of the server
+	char serverIP[32] = "127.0.0.1";
+
+	bool draw_config = false;
 private:
 
 	// Methods involving serialization / deserialization (contain TODOs)
@@ -43,7 +66,7 @@ private:
 
 	// GUI
 
-	void updateGUI();
+	void DrawConnectionConfig();
 
 
 	// Low level networking stuff
@@ -80,21 +103,6 @@ private:
 	IDatabaseGateway *database();
 
 
-	// Data members
-
-	enum class ServerState
-	{
-		Off,
-		Starting,
-		Running,
-		Stopping
-	};
-
-	// Server state
-	ServerState state = ServerState::Off;
-
-	// Application port
-	int port = 8000;
 
 	// Special socket to accept incoming client connections.
 	SOCKET listenSocket;

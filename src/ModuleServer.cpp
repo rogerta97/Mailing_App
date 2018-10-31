@@ -26,7 +26,8 @@ ModuleServer::~ModuleServer()
 
 bool ModuleServer::update()
 {
-	updateGUI();
+	if (draw_config)
+		DrawConnectionConfig();
 
 	switch (state)
 	{
@@ -149,46 +150,24 @@ void ModuleServer::sendPacket(SOCKET socket, OutputMemoryStream & stream)
 
 // GUI: Modify this to add extra features...
 
-void ModuleServer::updateGUI()
+void ModuleServer::DrawConnectionConfig()
 {
-	ImGui::Begin("Server Window");
+	ImGui::Begin("Connection configuration", &draw_config);
 
-	if (state == ServerState::Off)
-	{
-		// Port
-		ImGui::InputInt("Port", &port);
+	// Port
+	ImGui::InputInt("Port", &port);
 
-		// Simulate database
-		ImGui::Checkbox("Simulate database", &g_SimulateDatabaseConnection);
+	// Simulate database
+	ImGui::Checkbox("Simulate database", &g_SimulateDatabaseConnection);
 
-		// To start the server
-		if (ImGui::Button("Start server"))
-		{
-			if (state == ServerState::Off)
-			{
-				state = ServerState::Starting;
-			}
-		}
-	}
-	else if (state == ServerState::Running)
-	{
-		// To stop the server
-		if (ImGui::Button("Stop server"))
-		{
-			if (state == ServerState::Running)
-			{
-				state = ServerState::Stopping;
-			}
-		}
+	// IP address
+	ImGui::InputText("IP", serverIP, sizeof(*serverIP));
 
-		ImGui::Text("Connected clients:");
-		for (auto & client : clients)
-		{
-			ImGui::Text(" - %s", client.loginName.c_str());
-		}
+	ImGui::Text("Connected clients:");
+	for (auto & client : clients)
+		ImGui::Text(" - %s", client.loginName.c_str());
 
-		database()->updateGUI();
-	}
+	database()->updateGUI();
 
 	ImGui::End();
 }
