@@ -35,6 +35,10 @@ public:
 
 	bool cleanUp() override;
 
+	// Database
+
+	IDatabaseGateway *database();
+
 public:
 
 	// Server state
@@ -47,6 +51,7 @@ public:
 	char serverIP[32] = "127.0.0.1";
 
 	bool draw_config = false;
+
 private:
 
 	// Methods involving serialization / deserialization (contain TODOs)
@@ -98,11 +103,11 @@ private:
 
 	void deleteInvalidSockets();
 
-	// Database
-
-	IDatabaseGateway *database();
 
 
+	// A gateway to database operations
+	IDatabaseGateway *simulatedDatabaseGateway;
+	IDatabaseGateway *mysqlDatabaseGateway;
 
 	// Special socket to accept incoming client connections.
 	SOCKET listenSocket;
@@ -131,8 +136,4 @@ private:
 
 	// List with all connected clients
 	std::list<ClientStateInfo> clients;
-
-	// A gateway to database operations
-	IDatabaseGateway *simulatedDatabaseGateway;
-	IDatabaseGateway *mysqlDatabaseGateway;
 };

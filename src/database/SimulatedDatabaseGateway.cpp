@@ -28,3 +28,23 @@ std::vector<Message> SimulatedDatabaseGateway::getAllMessagesReceivedByUser(cons
 	}
 	return messages;
 }
+
+
+
+std::vector<User> SimulatedDatabaseGateway::getAllUsers()
+{
+	std::vector<User> users;
+
+	return users;
+}
+
+User SimulatedDatabaseGateway::getUserData(const std::string & username)
+{
+	User user;
+	return user;
+}
+
+
+void SimulatedDatabaseGateway::insertUser(const User & user)
+{
+}

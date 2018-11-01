@@ -32,6 +32,8 @@ public:
 	// State of the client
 	ClientState state = ClientState::Connecting;
 
+	std::string senderBuf = "loginName";   // Buffer for the sender
+
 private:
 
 	// Methods involving serialization / deserialization (contain TODOs)
@@ -88,7 +90,6 @@ private:
 	std::vector<Message> messages;
 
 	// Composing Message buffers (for IMGUI)
-	char senderBuf[64] = "loginName";   // Buffer for the sender
 	char receiverBuf[64]; // Buffer for the receiver
 	char subjectBuf[256]; // Buffer for the subject
 	char messageBuf[4096];// Buffer for the message

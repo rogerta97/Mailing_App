@@ -2,6 +2,7 @@
 
 #include "Module.h"
 #include <ctime>
+#include <string>
 
 class ModuleMainMenu : public Module
 {
@@ -12,8 +13,9 @@ public:
 	bool update() override;
 
 private:
-	 
-	bool connected = false;
+	
+	bool logged = false;
 	bool hosting_server = false;
 	clock_t start_time;
+	std::string warning_message;
 };

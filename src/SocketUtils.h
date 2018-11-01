@@ -6,6 +6,8 @@
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <vector>
+#include <string>
+#include <ctime>
 
 void initializeSocketsLibrary();
 
@@ -18,3 +20,4 @@ void printWSErrorAndExit(const char *msg);
 std::vector<SOCKET> selectReadableSockets(const std::vector<SOCKET> &inputSockets);
 
 std::vector<SOCKET> selectWritableSockets(const std::vector<SOCKET> &inputSockets);
+

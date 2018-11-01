@@ -43,7 +43,7 @@ void ModuleClient::updateMessenger()
 	switch (messengerState)
 	{
 	case ModuleClient::MessengerState::SendingLogin:
-		sendPacketLogin(senderBuf);
+		sendPacketLogin(senderBuf.c_str());
 		break;
 	case ModuleClient::MessengerState::RequestingMessages:
 		sendPacketQueryMessages();
@@ -172,7 +172,7 @@ void ModuleClient::updateGUI()
 			ImGui::InputInt("Port", &port);
 
 			// Connect button
-			ImGui::InputText("Login name", senderBuf, sizeof(senderBuf));
+			ImGui::InputText("Login name", (char*)senderBuf.c_str(), sizeof(senderBuf));
 
 			if (ImGui::Button("Connect"))
 			{

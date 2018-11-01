@@ -3,6 +3,9 @@
 #include "../imgui/imgui.h"
 #include <cstdarg>
 
+#include "../Application.h"
+
+
 // You can use this function to create the SQL statements easily, works like the printf function
 std::string stringFormat(const char *fmt, ...)
 {
@@ -46,6 +49,22 @@ void MySqlDatabaseGateway::insertMessage(const Message & message)
 	}
 }
 
+void MySqlDatabaseGateway::insertUser(const User & user)
+{
+	DBConnection db(bufMySqlHost, bufMySqlPort, bufMySqlDatabase, bufMySqlUsername, bufMySqlPassword);
+
+	if (db.isConnected())
+	{
+		DBResultSet res;
+
+		std::string date_time = App->DateTimeToString(App->getDateTime());
+
+		// insert some messages
+		db.sql(stringFormat("INSERT INTO users VALUES('%s', '%s', '%s')",
+			user.username.c_str(), user.password.c_str(), date_time.c_str()).c_str());
+	}
+}
+
 std::vector<Message> MySqlDatabaseGateway::getAllMessagesReceivedByUser(const std::string & username)
 {
 	std::vector<Message> messages;
@@ -73,6 +92,52 @@ std::vector<Message> MySqlDatabaseGateway::getAllMessagesReceivedByUser(const st
 
 
 	return messages;
+}
+
+
+std::vector<User> MySqlDatabaseGateway::getAllUsers()
+{
+	std::vector<User> users;
+
+	DBConnection db(bufMySqlHost, bufMySqlPort, bufMySqlDatabase, bufMySqlUsername, bufMySqlPassword);
+
+	if (db.isConnected())
+	{
+		std::string sqlStatement;
+
+		DBResultSet res = db.sql(stringFormat("select* from users").c_str());
+
+		for (auto & userRow : res.rows)
+		{
+			User user;
+			user.username = userRow.columns[0];
+			user.password = userRow.columns[1];
+			user.last_connected = App->StringToDateTime(userRow.columns[2]);
+		}
+	}
+
+
+	return users;
+}
+
+User MySqlDatabaseGateway::getUserData(const std::string & username)
+{
+	DBConnection db(bufMySqlHost, bufMySqlPort, bufMySqlDatabase, bufMySqlUsername, bufMySqlPassword);
+
+	User user;
+	if (db.isConnected())
+	{
+		std::string sqlStatement;
+
+		// consult all messages
+		DBResultSet res = db.sql(stringFormat("select* from users where(username = '%s')", username.c_str()).c_str());
+
+		user.username = res.rows[0].columns[0];
+		user.password = res.rows[0].columns[1];
+		user.last_connected = App->StringToDateTime(res.rows[0].columns[2]);
+	}
+
+	return user;
 }
 
 void MySqlDatabaseGateway::updateGUI()

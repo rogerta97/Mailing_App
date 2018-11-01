@@ -5,7 +5,7 @@
 #include "database/MySqlDatabaseGateway.h"
 #include "database/SimulatedDatabaseGateway.h"
 
-static bool g_SimulateDatabaseConnection = true;
+static bool g_SimulateDatabaseConnection = false;
 
 
 #define HEADER_SIZE sizeof(uint32_t)

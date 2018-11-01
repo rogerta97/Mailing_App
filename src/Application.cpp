@@ -106,3 +106,53 @@ bool Application::doPostUpdate()
 	}
 	return true;
 }
+
+
+tm Application::getDateTime()
+{
+	tm date_time = tm();
+	time_t rawtime = time(&rawtime);
+	localtime_s(&date_time, (const time_t*)&rawtime);
+	return date_time;
+}
+
+std::string Application::DateTimeToString(const tm& date_time)
+{
+	std::string ret;
+
+	ret += (std::to_string(date_time.tm_year + 1900) + '/');
+	ret += (std::to_string(date_time.tm_mon) + '/');
+
+	if(date_time.tm_mday >= 10)
+		ret += (std::to_string(date_time.tm_mday) + ' ');
+	else
+		ret += ('0' + std::to_string(date_time.tm_mday) + ' ');
+
+	ret += (std::to_string(date_time.tm_hour) + ':');
+	ret += (std::to_string(date_time.tm_min) + ':');
+	ret += std::to_string(date_time.tm_sec);
+
+	return ret;
+}
+
+std::tm Application::StringToDateTime(const std::string& string)
+{
+	std::tm ret;
+	char* cursor = (char*)string.c_str();
+	char* end_cursor = cursor + 4;
+
+	ret.tm_year = strtoul(cursor, &end_cursor, 10);
+	cursor = end_cursor + 1; end_cursor = cursor + 2;
+	ret.tm_year = strtoul(cursor, &end_cursor, 10);
+	cursor = end_cursor + 1; end_cursor = cursor + 2;
+	ret.tm_year = strtoul(cursor, &end_cursor, 10);
+
+	cursor = end_cursor + 1; end_cursor = cursor + 2;
+	ret.tm_year = strtoul(cursor, &end_cursor, 10);
+	cursor = end_cursor + 1; end_cursor = cursor + 2;
+	ret.tm_year = strtoul(cursor, &end_cursor, 10);
+	cursor = end_cursor + 1; end_cursor = cursor + 2;
+	ret.tm_year = strtoul(cursor, &end_cursor, 10);
+
+	return ret;
+}
