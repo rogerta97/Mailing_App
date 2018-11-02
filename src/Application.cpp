@@ -116,6 +116,18 @@ tm Application::getDateTime()
 	return date_time;
 }
 
+bool Application::CompareDateTime(const tm& datetime_a, const tm& datetime_b, int margin_in_seconds)
+{
+	if (datetime_a.tm_year == datetime_b.tm_year && datetime_a.tm_mon == datetime_b.tm_mon && datetime_a.tm_mday == datetime_b.tm_mday && datetime_a.tm_hour == datetime_b.tm_hour)
+	{
+		if ((datetime_a.tm_min == datetime_b.tm_min && std::abs(datetime_a.tm_sec - datetime_b.tm_sec) < margin_in_seconds) ||
+			(datetime_a.tm_min + 1 == datetime_b.tm_min && std::abs((datetime_a.tm_sec + 60) - datetime_b.tm_sec) < margin_in_seconds ||
+				datetime_a.tm_min == datetime_b.tm_min + 1 && std::abs((datetime_a.tm_sec) - (datetime_b.tm_sec + 60)) < margin_in_seconds))
+			return true;
+	}
+	return false;
+}
+
 std::string Application::DateTimeToString(const tm& date_time)
 {
 	std::string ret;
@@ -138,21 +150,24 @@ std::string Application::DateTimeToString(const tm& date_time)
 std::tm Application::StringToDateTime(const std::string& string)
 {
 	std::tm ret;
-	char* cursor = (char*)string.c_str();
-	char* end_cursor = cursor + 4;
+	if (string.size() > 0)
+	{
+		char* cursor = (char*)string.c_str();
+		char* end_cursor = cursor + 4;
 
-	ret.tm_year = strtoul(cursor, &end_cursor, 10);
-	cursor = end_cursor + 1; end_cursor = cursor + 2;
-	ret.tm_year = strtoul(cursor, &end_cursor, 10);
-	cursor = end_cursor + 1; end_cursor = cursor + 2;
-	ret.tm_year = strtoul(cursor, &end_cursor, 10);
+		ret.tm_year = strtoul(cursor, &end_cursor, 10);
+		cursor = end_cursor + 1; end_cursor = cursor + 2;
+		ret.tm_year = strtoul(cursor, &end_cursor, 10);
+		cursor = end_cursor + 1; end_cursor = cursor + 2;
+		ret.tm_year = strtoul(cursor, &end_cursor, 10);
 
-	cursor = end_cursor + 1; end_cursor = cursor + 2;
-	ret.tm_year = strtoul(cursor, &end_cursor, 10);
-	cursor = end_cursor + 1; end_cursor = cursor + 2;
-	ret.tm_year = strtoul(cursor, &end_cursor, 10);
-	cursor = end_cursor + 1; end_cursor = cursor + 2;
-	ret.tm_year = strtoul(cursor, &end_cursor, 10);
+		cursor = end_cursor + 1; end_cursor = cursor + 2;
+		ret.tm_year = strtoul(cursor, &end_cursor, 10);
+		cursor = end_cursor + 1; end_cursor = cursor + 2;
+		ret.tm_year = strtoul(cursor, &end_cursor, 10);
+		cursor = end_cursor + 1; end_cursor = cursor + 2;
+		ret.tm_year = strtoul(cursor, &end_cursor, 10);
+	}
 
 	return ret;
 }

@@ -17,4 +17,5 @@ struct User
 	std::string username;
 	std::string password;
 	tm last_connected;
+	tm last_writing;
 };

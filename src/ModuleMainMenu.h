@@ -1,8 +1,10 @@
 #pragma once
 
 #include "Module.h"
+#include "database\DatabaseTypes.h"
 #include <ctime>
 #include <string>
+#include <thread>
 
 class ModuleMainMenu : public Module
 {
@@ -12,6 +14,14 @@ public:
 
 	bool update() override;
 
+public:
+
+	bool writing = false;
+
+	std::thread connected_thread;
+	std::thread writing_thread;
+	std::thread getusers_thread;
+	User selected_user;
 private:
 	
 	bool logged = false;

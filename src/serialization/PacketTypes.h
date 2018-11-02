@@ -7,5 +7,9 @@ enum class PacketType : int8_t
 	LoginRequest,
 	QueryAllMessagesRequest,
 	QueryAllMessagesResponse,
-	SendMessageRequest
+	SendMessageRequest,
+	ConnectedPing,
+	WritingPing,
+	AllUsersRequest,
+	AllUsersResponse
 };

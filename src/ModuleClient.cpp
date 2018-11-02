@@ -2,8 +2,10 @@
 #include "Log.h"
 #include "imgui/imgui.h"
 #include "serialization/PacketTypes.h"
+#include "ModuleMainMenu.h"
 #include "Application.h"
 #include "ModuleServer.h"
+#include "database\IDatabaseGateway.h"
 
 #define HEADER_SIZE sizeof(uint32_t)
 #define RECV_CHUNK_SIZE 4096
@@ -42,23 +44,23 @@ void ModuleClient::updateMessenger()
 {
 	switch (messengerState)
 	{
-	case ModuleClient::MessengerState::SendingLogin:
+	case MessengerState::SendingLogin:
 		sendPacketLogin(senderBuf.c_str());
 		break;
-	case ModuleClient::MessengerState::RequestingMessages:
+	case MessengerState::RequestingMessages:
 		sendPacketQueryMessages();
 		break;
-	case ModuleClient::MessengerState::ReceivingMessages:
+	case MessengerState::ReceivingMessages:
 		// Idle, do nothing
 		break;
-	case ModuleClient::MessengerState::ShowingMessages:
+	case MessengerState::ShowingMessages:
 		// Idle, do nothing
 		break;
-	case ModuleClient::MessengerState::ComposingMessage:
+	case MessengerState::ComposingMessage:
 		// Idle, do nothing
 		break;
-	case ModuleClient::MessengerState::SendingMessage:
-		sendPacketSendMessage(receiverBuf, subjectBuf, messageBuf);
+	case MessengerState::SendingMessage:
+		sendPacketSendMessage(receiverBuf, messageBuf);
 		break;
 	default:
 		break;
@@ -79,6 +81,10 @@ void ModuleClient::onPacketReceived(const InputMemoryStream & stream)
 	case PacketType::QueryAllMessagesResponse:
 		onPacketReceivedQueryAllMessagesResponse(stream);
 		LOG("onPacketReceived() - packetType: QueryAllMessagesResponse");
+		break;
+	case PacketType::AllUsersResponse:
+		onPacketReceivedAllUsersResponse(stream);
+		LOG("onPacketReceived() - packetType: AllUsersResponse");
 		break;
 	default:
 		LOG("Unknown packet type received");
@@ -105,6 +111,28 @@ void ModuleClient::onPacketReceivedQueryAllMessagesResponse(const InputMemoryStr
 	messengerState = MessengerState::ShowingMessages;
 }
 
+
+void ModuleClient::onPacketReceivedAllUsersResponse(const InputMemoryStream &stream)
+{
+	current_users.clear();
+
+	uint32_t user_num;
+	stream.Read<uint32_t>(user_num);
+	std::string connected_time;
+	std::string writing_time;
+	for (int i = 0; i < user_num; i++)
+	{
+		User m;
+		stream.Read(m.username);
+		stream.Read(m.password);
+		stream.Read(connected_time);
+		stream.Read(writing_time);
+		m.last_connected = App->StringToDateTime(connected_time);
+		m.last_writing = App->StringToDateTime(writing_time);
+		current_users.push_back(m);
+	}
+}
+
 void ModuleClient::sendPacketLogin(const char * username)
 {
 	OutputMemoryStream stream;
@@ -126,14 +154,38 @@ void ModuleClient::sendPacketQueryMessages()
 	messengerState = MessengerState::ReceivingMessages;
 }
 
-void ModuleClient::sendPacketSendMessage(const char * receiver, const char * subject, const char *message)
+
+void ModuleClient::sendPacketConnectedPing()
+{
+	OutputMemoryStream stream;
+
+	stream.Write<int>((int)PacketType::ConnectedPing);
+	sendPacket(stream);
+}
+
+void ModuleClient::sendPacketWritingPing()
+{
+	OutputMemoryStream stream;
+
+	stream.Write<int>((int)PacketType::WritingPing);
+	sendPacket(stream);
+}
+
+void ModuleClient::sendPacketUsersRequest()
+{
+	OutputMemoryStream stream;
+
+	stream.Write<int>((int)PacketType::AllUsersRequest);
+	sendPacket(stream);
+}
+
+void ModuleClient::sendPacketSendMessage(const char * receiver,const char *message)
 {
 	OutputMemoryStream stream;
 
 	stream.Write<int>((int)PacketType::SendMessageRequest);
 	stream.Write(std::string(senderBuf));
 	stream.Write(std::string(receiver));
-	stream.Write(std::string(subject));
 	stream.Write(std::string(message));
 	sendPacket(stream);
 
@@ -197,7 +249,6 @@ void ModuleClient::updateGUI()
 		if (messengerState == MessengerState::ComposingMessage)
 		{
 			ImGui::InputText("Receiver", receiverBuf, sizeof(receiverBuf));
-			ImGui::InputText("Subject", subjectBuf, sizeof(subjectBuf));
 			ImGui::InputTextMultiline("Message", messageBuf, sizeof(messageBuf));
 			if (ImGui::Button("Send"))
 			{
@@ -241,8 +292,9 @@ void ModuleClient::updateGUI()
 	}
 
 	ImGui::End();
-
 }
+
+
 
 
 // Low-level networking stuff...
@@ -286,6 +338,7 @@ void ModuleClient::connectToServer()
 		state = ClientState::Disconnecting;
 	}
 
+	App->modServer->database()->Connect();
 }
 
 void ModuleClient::disconnectFromServer()

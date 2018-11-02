@@ -4,6 +4,7 @@
 #include "serialization/PacketTypes.h"
 #include "database/MySqlDatabaseGateway.h"
 #include "database/SimulatedDatabaseGateway.h"
+#include "Application.h"
 
 static bool g_SimulateDatabaseConnection = false;
 
@@ -79,6 +80,18 @@ void ModuleServer::onPacketReceived(SOCKET socket, const InputMemoryStream & str
 		onPacketReceivedSendMessage(socket, stream);
 		LOG("onPacketReceived() - packetType: SendMessageRequest");
 		break;
+	case PacketType::ConnectedPing:
+		onPacketReceivedConnectionPing(socket, stream);
+		LOG("onPacketReceived() - packetType: ConnectedPing");
+		break;
+	case PacketType::WritingPing:
+		onPacketReceivedWritingPing(socket, stream);
+		LOG("onPacketReceived() - packetType: WritingPing");
+		break; 
+	case PacketType::AllUsersRequest:
+		onPacketReceivedQueryAllUsers(socket, stream);
+		LOG("onPacketReceived() - packetType: AllUsersRequest");
+		break;
 	default:
 		LOG("Unknown packet type received");
 		break;
@@ -100,6 +113,43 @@ void ModuleServer::onPacketReceivedQueryAllMessages(SOCKET socket, const InputMe
 	// Get the username of this socket and send the response to it
 	ClientStateInfo & clientStateInfo = getClientStateInfoForSocket(socket);
 	sendPacketQueryAllMessagesResponse(socket, clientStateInfo.loginName);
+}
+
+void ModuleServer::onPacketReceivedConnectionPing(SOCKET socket, const InputMemoryStream & stream)
+{
+	ClientStateInfo & clientStateInfo = getClientStateInfoForSocket(socket);
+	database()->sendConnectedPing(clientStateInfo.loginName);
+}
+
+void ModuleServer::onPacketReceivedWritingPing(SOCKET socket, const InputMemoryStream & stream)
+{
+	ClientStateInfo & clientStateInfo = getClientStateInfoForSocket(socket);
+	database()->sendWritingPing(clientStateInfo.loginName);
+}
+
+
+void ModuleServer::onPacketReceivedQueryAllUsers(SOCKET socket, const InputMemoryStream& stream)
+{
+	sendPacketQueryAllUsersResponse(socket);
+}
+
+
+void ModuleServer::sendPacketQueryAllUsersResponse(SOCKET socket)
+{
+	std::vector<User> users = database()->getAllUsers();
+
+	OutputMemoryStream outStream;
+	outStream.Write<int>((int)PacketType::AllUsersResponse);
+	outStream.Write<uint32_t>((uint32_t)users.size());
+	for (int i = 0; i < users.size(); i++)
+	{
+		outStream.Write(users[i].username);
+		outStream.Write(users[i].password);
+		outStream.Write(App->DateTimeToString(users[i].last_connected));
+		outStream.Write(App->DateTimeToString(users[i].last_writing));
+	}
+
+	sendPacket(socket, outStream);
 }
 
 void ModuleServer::sendPacketQueryAllMessagesResponse(SOCKET socket, const std::string &username)
@@ -127,7 +177,6 @@ void ModuleServer::onPacketReceivedSendMessage(SOCKET socket, const InputMemoryS
 	Message message;
 	stream.Read(message.senderUsername);
 	stream.Read(message.receiverUsername);
-	stream.Read(message.subject);
 	stream.Read(message.body);
 
 	// Insert the message in the database

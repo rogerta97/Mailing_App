@@ -61,10 +61,18 @@ private:
 	void onPacketReceivedLogin(SOCKET socket, const InputMemoryStream& stream);
 
 	void onPacketReceivedQueryAllMessages(SOCKET socket, const InputMemoryStream& stream);
+
+	void onPacketReceivedQueryAllUsers(SOCKET socket, const InputMemoryStream& stream);
 	
 	void onPacketReceivedSendMessage(SOCKET socket, const InputMemoryStream& stream);
 
+	void onPacketReceivedConnectionPing(SOCKET socket, const InputMemoryStream& stream);
+
+	void onPacketReceivedWritingPing(SOCKET socket, const InputMemoryStream& stream);
+
 	void sendPacketQueryAllMessagesResponse(SOCKET socket, const std::string &username);
+
+	void sendPacketQueryAllUsersResponse(SOCKET socket);
 
 	void sendPacket(SOCKET socket, OutputMemoryStream& stream);
 

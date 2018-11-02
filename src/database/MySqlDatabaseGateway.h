@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IDatabaseGateway.h"
+#include "DBConnection.h"
 
 class MySqlDatabaseGateway :
 	public IDatabaseGateway
@@ -23,7 +24,14 @@ public:
 	std::vector<User> getAllUsers() override;
 	User getUserData(const std::string &username);
 
+	void sendConnectedPing(const std::string &username);
+	void sendWritingPing(const std::string &username);
+
 	virtual void updateGUI() override;
+
+	void Connect() { db = new DBConnection(bufMySqlHost, bufMySqlPort, bufMySqlDatabase, bufMySqlUsername, bufMySqlPassword);}
+	void Disconnect() { if(db) delete db; }
+	void Reconnect() { Disconnect(); Reconnect(); }
 
 private:
 
@@ -34,5 +42,7 @@ private:
 	char bufMySqlTable[64] = "messages";
 	char bufMySqlUsername[64] = "rodrigo";
 	char bufMySqlPassword[64] = "rodrigodpl";
+
+	DBConnection* db = nullptr;
 };
 

@@ -12,14 +12,53 @@ bool ModuleMainMenu::start()
 	return true;
 }
 
+
+
+void sendConnectedPingThread()
+{
+	while (true)
+	{
+		if (App->modClient->connected_ping_timer / CLOCKS_PER_SEC + 3 < std::clock() / CLOCKS_PER_SEC)
+		{
+			App->modClient->sendPacketConnectedPing();
+			App->modClient->connected_ping_timer = std::clock();
+		}
+	}
+}
+
+void sendWritingPingThread()
+{
+	while (App->modMainMenu->writing)
+	{
+		if (App->modClient->writing_ping_timer / CLOCKS_PER_SEC + 3 < std::clock() / CLOCKS_PER_SEC)
+		{
+			App->modClient->sendPacketWritingPing();
+			App->modClient->writing_ping_timer = std::clock();
+		}
+	}
+}
+
+void requestUsersThread()
+{
+	while (true)
+	{
+		if (App->modClient->user_request_timer / CLOCKS_PER_SEC+ 3  < std::clock() / CLOCKS_PER_SEC)
+		{
+			App->modClient->sendPacketUsersRequest();
+			App->modClient->user_request_timer = std::clock();
+		}
+	}
+}
+
+
 bool ModuleMainMenu::update()
 {
 	ImGui::Begin("Main menu");
 
+	clock_t current_time = clock() - start_time;
+
 	if (!logged)
 	{
-		clock_t current_time = clock() - start_time;
-
 		switch (App->modClient->state)
 		{
 		case ClientState::Connecting:
@@ -82,6 +121,9 @@ bool ModuleMainMenu::update()
 					warning_message = "Incorrect password.";
 				else {
 					App->modClient->senderBuf = user_buffer;
+					App->modClient->messengerState = MessengerState::SendingLogin;
+					connected_thread = std::thread(sendConnectedPingThread);
+					getusers_thread = std::thread(requestUsersThread);
 					logged = true;
 				}
 			}
@@ -95,10 +137,12 @@ bool ModuleMainMenu::update()
 					User new_user;
 					new_user.username = user_buffer;
 					new_user.password = password_buffer;
-					new_user.last_connected = App->getDateTime();
 					App->modServer->database()->insertUser(new_user);
 
 					App->modClient->senderBuf = user_buffer;
+					App->modClient->messengerState = MessengerState::SendingLogin;
+					connected_thread = std::thread(sendConnectedPingThread);
+					getusers_thread = std::thread(requestUsersThread);
 					logged = true;
 				}
 				else
@@ -116,7 +160,48 @@ bool ModuleMainMenu::update()
 	}
 	else
 	{
+		ImGui::Text("Online users:");
+		tm current_time = App->getDateTime();
+		static int selected = -1;
+		int count = 0;
 
+		for (auto it = App->modClient->current_users.begin(); it != App->modClient->current_users.end(); it++)
+		{
+			if (App->modClient->senderBuf == (*it).username)
+				continue;
+
+			if (App->CompareDateTime(current_time, (*it).last_connected))
+			{
+				count++;
+				if (ImGui::Selectable((*it).username.c_str(), selected == count))
+				{
+					selected = count;
+					selected_user = *it;
+				}
+				if (App->CompareDateTime(current_time, (*it).last_writing))
+				{
+					ImGui::SameLine();
+					ImGui::Text("Writing...");
+				}
+			}
+		}
+
+		ImGui::Text("Offline users:");
+		for (auto it = App->modClient->current_users.begin(); it != App->modClient->current_users.end(); it++)
+		{
+			if (App->modClient->senderBuf == (*it).username)
+				continue;
+
+			if (!App->CompareDateTime(current_time, (*it).last_connected))
+			{
+				count++;
+				if (ImGui::Selectable((*it).username.c_str(), selected == count))
+				{
+					selected = count;
+					selected_user = *it;
+				}
+			}
+		}
 	}
 
 

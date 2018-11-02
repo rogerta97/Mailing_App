@@ -37,59 +37,109 @@ MySqlDatabaseGateway::~MySqlDatabaseGateway()
 
 void MySqlDatabaseGateway::insertMessage(const Message & message)
 {
-	DBConnection db(bufMySqlHost, bufMySqlPort, bufMySqlDatabase, bufMySqlUsername, bufMySqlPassword);
-
-	if (db.isConnected())
+	if (db)
 	{
-		DBResultSet res;
-		
-		// insert some messages
-		db.sql(stringFormat("INSERT INTO messages VALUES('%s', '%s', '%s', '%s')",
-			message.senderUsername.c_str(), message.receiverUsername.c_str(), message.subject.c_str(), message.body.c_str()).c_str());
+		if (db->isConnected())
+		{
+			DBResultSet res;
+
+			// insert some messages
+			db->sql(stringFormat("INSERT INTO messages VALUES('%s', '%s', '%s')",
+				message.senderUsername.c_str(), message.receiverUsername.c_str(), message.body.c_str()).c_str());
+		}
+		else
+			Reconnect();
 	}
+	Connect();
 }
 
 void MySqlDatabaseGateway::insertUser(const User & user)
 {
-	DBConnection db(bufMySqlHost, bufMySqlPort, bufMySqlDatabase, bufMySqlUsername, bufMySqlPassword);
-
-	if (db.isConnected())
+	if (db)
 	{
-		DBResultSet res;
+		if (db->isConnected())
+		{
+			DBResultSet res;
 
-		std::string date_time = App->DateTimeToString(App->getDateTime());
+			std::string date_time = App->DateTimeToString(App->getDateTime());
+			std::string writing_time = App->DateTimeToString(App->getDateTime());
 
-		// insert some messages
-		db.sql(stringFormat("INSERT INTO users VALUES('%s', '%s', '%s')",
-			user.username.c_str(), user.password.c_str(), date_time.c_str()).c_str());
+			db->sql(stringFormat("INSERT INTO users VALUES('%s', '%s', '%s', '%s')",
+				user.username.c_str(), user.password.c_str(), date_time.c_str(), writing_time.c_str()).c_str());
+		}
+		else
+			Reconnect();
 	}
+	Connect();
 }
+
+void MySqlDatabaseGateway::sendConnectedPing(const std::string &username)
+{
+	if (db)
+	{
+		if (db->isConnected())
+		{
+			DBResultSet res;
+
+			std::string date_time = App->DateTimeToString(App->getDateTime());
+
+			db->sql(stringFormat("update users set connectedTime = '%s' where username = '%s'",
+				date_time.c_str(), username.c_str()).c_str());
+		}
+		else
+			Reconnect();
+	}
+	Connect();
+}
+
+void MySqlDatabaseGateway::sendWritingPing(const std::string &username)
+{
+	if (db)
+	{
+		if (db->isConnected())
+		{
+			DBResultSet res;
+
+			std::string date_time = App->DateTimeToString(App->getDateTime());
+
+			db->sql(stringFormat("update users set writingTime = '%s' where username = '%s'",
+				date_time.c_str(), username.c_str()).c_str());
+		}
+		else
+			Reconnect();
+	}
+	Connect();
+}
+
 
 std::vector<Message> MySqlDatabaseGateway::getAllMessagesReceivedByUser(const std::string & username)
 {
 	std::vector<Message> messages;
 
-	DBConnection db(bufMySqlHost, bufMySqlPort, bufMySqlDatabase, bufMySqlUsername, bufMySqlPassword);
-
-	if (db.isConnected())
+	if (db)
 	{
-		std::string sqlStatement;
-		
-		// consult all messages
-		DBResultSet res = db.sql(stringFormat("select* from messages where(receiver = '%s')", username.c_str()).c_str());
-
-		// fill the array of messages
-		for (auto & messageRow : res.rows)
+		if (db->isConnected())
 		{
-			Message message;
-			message.senderUsername = messageRow.columns[0];
-			message.receiverUsername = messageRow.columns[1];
-			message.subject = messageRow.columns[2];
-			message.body = messageRow.columns[3];
-			messages.push_back(message);
-		}
-	}
+			std::string sqlStatement;
 
+			// consult all messages
+			DBResultSet res = db->sql(stringFormat("select* from messages where(receiver = '%s')", username.c_str()).c_str());
+
+			// fill the array of messages
+			for (auto & messageRow : res.rows)
+			{
+				Message message;
+				message.senderUsername = messageRow.columns[0];
+				message.receiverUsername = messageRow.columns[1];
+				message.subject = messageRow.columns[2];
+				message.body = messageRow.columns[3];
+				messages.push_back(message);
+			}
+		}
+		else
+			Reconnect();
+	}
+	Connect();
 
 	return messages;
 }
@@ -99,22 +149,28 @@ std::vector<User> MySqlDatabaseGateway::getAllUsers()
 {
 	std::vector<User> users;
 
-	DBConnection db(bufMySqlHost, bufMySqlPort, bufMySqlDatabase, bufMySqlUsername, bufMySqlPassword);
-
-	if (db.isConnected())
+	if (db)
 	{
-		std::string sqlStatement;
-
-		DBResultSet res = db.sql(stringFormat("select* from users").c_str());
-
-		for (auto & userRow : res.rows)
+		if (db->isConnected())
 		{
-			User user;
-			user.username = userRow.columns[0];
-			user.password = userRow.columns[1];
-			user.last_connected = App->StringToDateTime(userRow.columns[2]);
+			std::string sqlStatement;
+
+			DBResultSet res = db->sql(stringFormat("select* from users").c_str());
+
+			for (auto & userRow : res.rows)
+			{
+				User user;
+				user.username = userRow.columns[0];
+				user.password = userRow.columns[1];
+				user.last_connected = App->StringToDateTime(userRow.columns[2]);
+				user.last_writing = App->StringToDateTime(userRow.columns[3]);
+				users.push_back(user);
+			}
 		}
+		else
+			Reconnect();
 	}
+	Connect();
 
 
 	return users;
@@ -122,20 +178,27 @@ std::vector<User> MySqlDatabaseGateway::getAllUsers()
 
 User MySqlDatabaseGateway::getUserData(const std::string & username)
 {
-	DBConnection db(bufMySqlHost, bufMySqlPort, bufMySqlDatabase, bufMySqlUsername, bufMySqlPassword);
-
 	User user;
-	if (db.isConnected())
+	if (db)
 	{
-		std::string sqlStatement;
+		if (db->isConnected())
+		{
+			std::string sqlStatement;
 
-		// consult all messages
-		DBResultSet res = db.sql(stringFormat("select* from users where(username = '%s')", username.c_str()).c_str());
+			DBResultSet res = db->sql(stringFormat("select* from users where(username = '%s')", username.c_str()).c_str());
 
-		user.username = res.rows[0].columns[0];
-		user.password = res.rows[0].columns[1];
-		user.last_connected = App->StringToDateTime(res.rows[0].columns[2]);
+			if (res.rows.size() != 0)
+			{
+				user.username = res.rows[0].columns[0];
+				user.password = res.rows[0].columns[1];
+				user.last_connected = App->StringToDateTime(res.rows[0].columns[2]);
+				user.last_writing = App->StringToDateTime(res.rows[0].columns[3]);
+			}
+		}
+		else
+			Reconnect();
 	}
+	Connect();
 
 	return user;
 }

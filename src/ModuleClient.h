@@ -5,7 +5,6 @@
 #include "database/DatabaseTypes.h"
 #include "serialization/MemoryStream.h"
 
-
 // Client connection state
 enum class ClientState
 {
@@ -16,6 +15,19 @@ enum class ClientState
 	Disconnecting
 };
 
+// Current screen of the messenger app
+enum class MessengerState
+{
+	SendingLogin,
+	RequestingMessages,
+	ReceivingMessages,
+	ShowingMessages,
+	ComposingMessage,
+	SendingMessage
+};
+
+void sendConnectedPingThread();
+void sendWritingPingThread();
 
 class ModuleClient : public Module
 {
@@ -27,12 +39,25 @@ public:
 
 	bool cleanUp() override;
 
+	void sendPacketConnectedPing();
+
+	void sendPacketWritingPing();
+
+	void sendPacketUsersRequest();
 public:
 
 	// State of the client
 	ClientState state = ClientState::Connecting;
 
 	std::string senderBuf = "loginName";   // Buffer for the sender
+	clock_t connected_ping_timer = 0;
+	clock_t writing_ping_timer = 0;
+	clock_t user_request_timer = 0;
+
+	// Current screen of the messenger application
+	MessengerState messengerState = MessengerState::SendingLogin;
+
+	std::vector<User> current_users;
 
 private:
 
@@ -44,11 +69,13 @@ private:
 
 	void onPacketReceivedQueryAllMessagesResponse(const InputMemoryStream &stream);
 
+	void onPacketReceivedAllUsersResponse(const InputMemoryStream &stream);
+
 	void sendPacketLogin(const char *username);
 
 	void sendPacketQueryMessages();
 
-	void sendPacketSendMessage(const char *receiver, const char *subject, const char *message);
+	void sendPacketSendMessage(const char *receiver,  const char *message);
 
 	void sendPacket(const OutputMemoryStream &stream);
 
@@ -71,27 +98,11 @@ private:
 	// Socket to connect to the server
 	SOCKET connSocket;
 
-
-	// Current screen of the messenger app
-	enum class MessengerState
-	{
-		SendingLogin,
-		RequestingMessages,
-		ReceivingMessages,
-		ShowingMessages,
-		ComposingMessage,
-		SendingMessage
-	};
-
-	// Current screen of the messenger application
-	MessengerState messengerState = MessengerState::SendingLogin;
-
 	// All messages in the client inbox
 	std::vector<Message> messages;
 
 	// Composing Message buffers (for IMGUI)
 	char receiverBuf[64]; // Buffer for the receiver
-	char subjectBuf[256]; // Buffer for the subject
 	char messageBuf[4096];// Buffer for the message
 
 
@@ -105,4 +116,5 @@ private:
 	// Send buffer state
 	size_t sendHead = 0;
 	std::vector<uint8_t> sendBuffer;
+
 };
