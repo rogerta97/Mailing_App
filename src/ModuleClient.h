@@ -44,6 +44,8 @@ public:
 	void sendPacketWritingPing();
 
 	void sendPacketUsersRequest();
+
+	void sendPacketQueryMessages(const char *sender);
 public:
 
 	// State of the client
@@ -53,6 +55,7 @@ public:
 	clock_t connected_ping_timer = 0;
 	clock_t writing_ping_timer = 0;
 	clock_t user_request_timer = 0;
+	clock_t message_request_timer = 0;
 
 	// Current screen of the messenger application
 	MessengerState messengerState = MessengerState::SendingLogin;
@@ -73,9 +76,9 @@ private:
 
 	void sendPacketLogin(const char *username);
 
-	void sendPacketQueryMessages();
-
 	void sendPacketSendMessage(const char *receiver,  const char *message);
+
+	void sendPacketMessagesRead(const char *sender);
 
 	void sendPacket(const OutputMemoryStream &stream);
 

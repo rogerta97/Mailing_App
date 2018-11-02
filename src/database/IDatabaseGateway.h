@@ -19,13 +19,15 @@ public:
 	virtual void insertMessage(const Message &message) = 0;
 	virtual void insertUser(const User &user) = 0;
 
-	virtual std::vector<Message> getAllMessagesReceivedByUser(const std::string &username) = 0;
+	virtual std::vector<Message> getAllMessagesReceivedByUser(const std::string &username, const std::string &sender) = 0;
 	virtual std::vector<User> getAllUsers() = 0;
 
 	virtual User getUserData(const std::string &username) = 0;
 
 	virtual void sendConnectedPing(const std::string &username) = 0;
 	virtual void sendWritingPing(const std::string &username) = 0;
+
+	virtual void UpdateReadMessages(const std::string &sender, const std::string &receiver) = 0;
 
 	virtual void updateGUI() { };
 

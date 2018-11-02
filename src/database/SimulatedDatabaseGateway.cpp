@@ -16,7 +16,7 @@ void SimulatedDatabaseGateway::insertMessage(const Message & message)
 	allMessages.push_back(message);
 }
 
-std::vector<Message> SimulatedDatabaseGateway::getAllMessagesReceivedByUser(const std::string & username)
+std::vector<Message> SimulatedDatabaseGateway::getAllMessagesReceivedByUser(const std::string & username, const std::string &sender)
 {
 	std::vector<Message> messages;
 	for (const auto & message : allMessages)

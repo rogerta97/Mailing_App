@@ -20,18 +20,20 @@ public:
 	void insertMessage(const Message &message) override;
 	void insertUser(const User &user) override;
 
-	std::vector<Message> getAllMessagesReceivedByUser(const std::string &username) override;
+	std::vector<Message> getAllMessagesReceivedByUser(const std::string &username, const std::string &sender) override;
 	std::vector<User> getAllUsers() override;
-	User getUserData(const std::string &username);
+	User getUserData(const std::string &username) override;
 
-	void sendConnectedPing(const std::string &username);
-	void sendWritingPing(const std::string &username);
+	void sendConnectedPing(const std::string &username) override;
+	void sendWritingPing(const std::string &username) override;
 
 	virtual void updateGUI() override;
 
-	void Connect() { db = new DBConnection(bufMySqlHost, bufMySqlPort, bufMySqlDatabase, bufMySqlUsername, bufMySqlPassword);}
-	void Disconnect() { if(db) delete db; }
-	void Reconnect() { Disconnect(); Reconnect(); }
+	void UpdateReadMessages(const std::string &sender, const std::string &receiver) override;
+
+	void Connect() override { db = new DBConnection(bufMySqlHost, bufMySqlPort, bufMySqlDatabase, bufMySqlUsername, bufMySqlPassword);};
+	void Disconnect() override { if(db) delete db; }
+	void Reconnect() override { Disconnect(); Reconnect(); }
 
 private:
 

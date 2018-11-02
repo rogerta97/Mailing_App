@@ -44,13 +44,14 @@ void MySqlDatabaseGateway::insertMessage(const Message & message)
 			DBResultSet res;
 
 			// insert some messages
-			db->sql(stringFormat("INSERT INTO messages VALUES('%s', '%s', '%s')",
+			db->sql(stringFormat("INSERT INTO messages (sender, receiver, body, sent_time, is_received, is_read) VALUES('%s', '%s', '%s', '%s', false, false)",
 				message.senderUsername.c_str(), message.receiverUsername.c_str(), message.body.c_str()).c_str());
 		}
 		else
 			Reconnect();
 	}
-	Connect();
+	else
+		Connect();
 }
 
 void MySqlDatabaseGateway::insertUser(const User & user)
@@ -70,7 +71,8 @@ void MySqlDatabaseGateway::insertUser(const User & user)
 		else
 			Reconnect();
 	}
-	Connect();
+	else
+		Connect();
 }
 
 void MySqlDatabaseGateway::sendConnectedPing(const std::string &username)
@@ -89,7 +91,8 @@ void MySqlDatabaseGateway::sendConnectedPing(const std::string &username)
 		else
 			Reconnect();
 	}
-	Connect();
+	else
+		Connect();
 }
 
 void MySqlDatabaseGateway::sendWritingPing(const std::string &username)
@@ -108,11 +111,30 @@ void MySqlDatabaseGateway::sendWritingPing(const std::string &username)
 		else
 			Reconnect();
 	}
-	Connect();
+	else
+		Connect();
+}
+
+void MySqlDatabaseGateway::UpdateReadMessages(const std::string &sender, const std::string &receiver)
+{
+	if (db)
+	{
+		if (db->isConnected())
+		{
+			DBResultSet res;
+
+			db->sql(stringFormat("update messages set is_read = true where (sender = '%s' and receiver = '%s')",
+				sender.c_str(), receiver.c_str()).c_str());
+		}
+		else
+			Reconnect();
+	}
+	else
+		Connect();
 }
 
 
-std::vector<Message> MySqlDatabaseGateway::getAllMessagesReceivedByUser(const std::string & username)
+std::vector<Message> MySqlDatabaseGateway::getAllMessagesReceivedByUser(const std::string & username, const std::string &sender)
 {
 	std::vector<Message> messages;
 
@@ -123,23 +145,29 @@ std::vector<Message> MySqlDatabaseGateway::getAllMessagesReceivedByUser(const st
 			std::string sqlStatement;
 
 			// consult all messages
-			DBResultSet res = db->sql(stringFormat("select* from messages where(receiver = '%s')", username.c_str()).c_str());
+			DBResultSet res = db->sql(stringFormat("select* from messages where(receiver = '%s' or sender = '%s')", username.c_str(), sender.c_str()).c_str());
 
 			// fill the array of messages
 			for (auto & messageRow : res.rows)
 			{
 				Message message;
-				message.senderUsername = messageRow.columns[0];
-				message.receiverUsername = messageRow.columns[1];
-				message.subject = messageRow.columns[2];
+				message.senderUsername = messageRow.columns[1];
+				message.receiverUsername = messageRow.columns[2];
 				message.body = messageRow.columns[3];
+				message.sent_time = App->StringToDateTime(messageRow.columns[4]);
+				if (message.receiverUsername == username)
+				{
+					message.is_received = true;
+					db->sql(stringFormat("update messages set is_received = true where (id = '%s')", messageRow.columns[0].c_str()).c_str());
+				}
 				messages.push_back(message);
 			}
 		}
 		else
 			Reconnect();
 	}
-	Connect();
+	else
+		Connect();
 
 	return messages;
 }
@@ -170,7 +198,8 @@ std::vector<User> MySqlDatabaseGateway::getAllUsers()
 		else
 			Reconnect();
 	}
-	Connect();
+	else
+		Connect();
 
 
 	return users;
@@ -198,7 +227,8 @@ User MySqlDatabaseGateway::getUserData(const std::string & username)
 		else
 			Reconnect();
 	}
-	Connect();
+	else
+		Connect();
 
 	return user;
 }

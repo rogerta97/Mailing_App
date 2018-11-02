@@ -48,7 +48,7 @@ void ModuleClient::updateMessenger()
 		sendPacketLogin(senderBuf.c_str());
 		break;
 	case MessengerState::RequestingMessages:
-		sendPacketQueryMessages();
+		// Idle, do nothing
 		break;
 	case MessengerState::ReceivingMessages:
 		// Idle, do nothing
@@ -98,13 +98,17 @@ void ModuleClient::onPacketReceivedQueryAllMessagesResponse(const InputMemoryStr
 
 	uint32_t messageCount;
 	stream.Read<uint32_t>(messageCount);
+	std::string sent_time;
 	for (int i = 0; i < messageCount; i++)
 	{
 		Message m;
 		stream.Read(m.senderUsername);
 		stream.Read(m.receiverUsername);
-		stream.Read(m.subject);
 		stream.Read(m.body);
+		stream.Read(sent_time);
+		m.sent_time = App->StringToDateTime(sent_time);
+		stream.Read<bool>(m.is_read);
+		stream.Read<bool>(m.is_received);
 		messages.push_back(m);
 	}
 
@@ -144,11 +148,23 @@ void ModuleClient::sendPacketLogin(const char * username)
 	messengerState = MessengerState::RequestingMessages;
 }
 
-void ModuleClient::sendPacketQueryMessages()
+void ModuleClient::sendPacketMessagesRead(const char *sender)
+{
+	OutputMemoryStream stream;
+
+	stream.Write<int>((int)PacketType::MessagesRead);
+	stream.Write(std::string(sender));
+	stream.Write(std::string(senderBuf));
+
+	sendPacket(stream);
+}
+
+void ModuleClient::sendPacketQueryMessages(const char *sender)
 {
 	OutputMemoryStream stream;
 	
 	stream.Write<int>((int)PacketType::QueryAllMessagesRequest);
+	stream.Write(std::string(sender));
 	sendPacket(stream);
 
 	messengerState = MessengerState::ReceivingMessages;
@@ -178,6 +194,8 @@ void ModuleClient::sendPacketUsersRequest()
 	stream.Write<int>((int)PacketType::AllUsersRequest);
 	sendPacket(stream);
 }
+
+
 
 void ModuleClient::sendPacketSendMessage(const char * receiver,const char *message)
 {
@@ -277,7 +295,7 @@ void ModuleClient::updateGUI()
 				ImGui::Text(" - Your inbox is empty.");
 			}
 
-			int i = 0;
+			/*int i = 0;
 			for (auto &message : messages)
 			{
 				ImGui::PushID(i++);
@@ -287,7 +305,7 @@ void ModuleClient::updateGUI()
 					ImGui::TreePop();
 				}
 				ImGui::PopID();
-			}
+			}*/
 		}
 	}
 
@@ -326,6 +344,7 @@ void ModuleClient::connectToServer()
 		state = ClientState::Connected;
 		LOG("Server connected to %s:%d", App->modServer->serverIP, App->modServer->port);
 
+		App->modServer->database()->Connect();
 		messengerState = MessengerState::SendingLogin;
 	}
 
@@ -338,7 +357,6 @@ void ModuleClient::connectToServer()
 		state = ClientState::Disconnecting;
 	}
 
-	App->modServer->database()->Connect();
 }
 
 void ModuleClient::disconnectFromServer()

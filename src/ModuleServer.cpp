@@ -91,6 +91,10 @@ void ModuleServer::onPacketReceived(SOCKET socket, const InputMemoryStream & str
 	case PacketType::AllUsersRequest:
 		onPacketReceivedQueryAllUsers(socket, stream);
 		LOG("onPacketReceived() - packetType: AllUsersRequest");
+		break; 
+	case PacketType::MessagesRead:
+		onPacketReceivedMessagesRead(socket, stream);
+		LOG("onPacketReceived() - packetType: MessagesRead");
 		break;
 	default:
 		LOG("Unknown packet type received");
@@ -108,11 +112,26 @@ void ModuleServer::onPacketReceivedLogin(SOCKET socket, const InputMemoryStream 
 	client.loginName = loginName;
 }
 
+
+void ModuleServer::onPacketReceivedMessagesRead(SOCKET socket, const InputMemoryStream& stream)
+{
+	std::string sender;
+	std::string receiver;
+
+	stream.Read(sender);
+	stream.Read(receiver);
+
+	database()->UpdateReadMessages(sender, receiver);
+}
+
+
 void ModuleServer::onPacketReceivedQueryAllMessages(SOCKET socket, const InputMemoryStream & stream)
 {
 	// Get the username of this socket and send the response to it
 	ClientStateInfo & clientStateInfo = getClientStateInfoForSocket(socket);
-	sendPacketQueryAllMessagesResponse(socket, clientStateInfo.loginName);
+	std::string sender;
+	stream.Read(sender);
+	sendPacketQueryAllMessagesResponse(socket, clientStateInfo.loginName, sender);
 }
 
 void ModuleServer::onPacketReceivedConnectionPing(SOCKET socket, const InputMemoryStream & stream)
@@ -126,7 +145,6 @@ void ModuleServer::onPacketReceivedWritingPing(SOCKET socket, const InputMemoryS
 	ClientStateInfo & clientStateInfo = getClientStateInfoForSocket(socket);
 	database()->sendWritingPing(clientStateInfo.loginName);
 }
-
 
 void ModuleServer::onPacketReceivedQueryAllUsers(SOCKET socket, const InputMemoryStream& stream)
 {
@@ -152,10 +170,10 @@ void ModuleServer::sendPacketQueryAllUsersResponse(SOCKET socket)
 	sendPacket(socket, outStream);
 }
 
-void ModuleServer::sendPacketQueryAllMessagesResponse(SOCKET socket, const std::string &username)
+void ModuleServer::sendPacketQueryAllMessagesResponse(SOCKET socket, const std::string &username, const std::string &sender)
 {
 	// Obtain the list of messages from the DB
-	std::vector<Message> messages = database()->getAllMessagesReceivedByUser(username);
+	std::vector<Message> messages = database()->getAllMessagesReceivedByUser(username, sender);
 	
 	OutputMemoryStream outStream;
 	outStream.Write<int>((int)PacketType::QueryAllMessagesResponse);
@@ -164,8 +182,10 @@ void ModuleServer::sendPacketQueryAllMessagesResponse(SOCKET socket, const std::
 	{
 		outStream.Write(messages[i].senderUsername);
 		outStream.Write(messages[i].receiverUsername);
-		outStream.Write(messages[i].subject);
 		outStream.Write(messages[i].body);
+		outStream.Write(App->DateTimeToString(messages[i].sent_time));
+		outStream.Write<bool>(messages[i].is_read);
+		outStream.Write<bool>(messages[i].is_received);
 	}
 
 	sendPacket(socket, outStream);
@@ -361,6 +381,8 @@ void ModuleServer::handleIncomingDataFromClient(ClientStateInfo & info)
 				onPacketReceived(info.socket, stream);
 				info.recvPacketHead += packetSize;
 			}
+			else
+				break;
 		}
 		if (info.recvPacketHead >= info.recvByteHead)
 		{

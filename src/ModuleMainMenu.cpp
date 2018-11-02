@@ -42,10 +42,25 @@ void requestUsersThread()
 {
 	while (true)
 	{
-		if (App->modClient->user_request_timer / CLOCKS_PER_SEC+ 3  < std::clock() / CLOCKS_PER_SEC)
+		if (App->modClient->user_request_timer / CLOCKS_PER_SEC + 3  < std::clock() / CLOCKS_PER_SEC)
 		{
 			App->modClient->sendPacketUsersRequest();
 			App->modClient->user_request_timer = std::clock();
+		}
+	}
+}
+
+void requestMessagesThread()
+{
+	while (true)
+	{
+		if (App->modMainMenu->selected_user.username.size() > 0)
+		{
+			if (App->modClient->message_request_timer / CLOCKS_PER_SEC + 3 < std::clock() / CLOCKS_PER_SEC)
+			{
+				App->modClient->sendPacketQueryMessages(App->modMainMenu->selected_user.username.c_str());
+				App->modClient->message_request_timer = std::clock();
+			}
 		}
 	}
 }
@@ -124,6 +139,7 @@ bool ModuleMainMenu::update()
 					App->modClient->messengerState = MessengerState::SendingLogin;
 					connected_thread = std::thread(sendConnectedPingThread);
 					getusers_thread = std::thread(requestUsersThread);
+					//getmessages_thread = std::thread(requestMessagesThread);
 					logged = true;
 				}
 			}
@@ -143,6 +159,7 @@ bool ModuleMainMenu::update()
 					App->modClient->messengerState = MessengerState::SendingLogin;
 					connected_thread = std::thread(sendConnectedPingThread);
 					getusers_thread = std::thread(requestUsersThread);
+					//getmessages_thread = std::thread(requestMessagesThread);
 					logged = true;
 				}
 				else
@@ -160,7 +177,7 @@ bool ModuleMainMenu::update()
 	}
 	else
 	{
-		ImGui::Text("Online users:");
+		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Online users:");
 		tm current_time = App->getDateTime();
 		static int selected = -1;
 		int count = 0;
@@ -186,7 +203,7 @@ bool ModuleMainMenu::update()
 			}
 		}
 
-		ImGui::Text("Offline users:");
+		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Offline users:");
 		for (auto it = App->modClient->current_users.begin(); it != App->modClient->current_users.end(); it++)
 		{
 			if (App->modClient->senderBuf == (*it).username)
@@ -202,7 +219,17 @@ bool ModuleMainMenu::update()
 				}
 			}
 		}
+
+		if (App->modMainMenu->selected_user.username.size() > 0)
+		{
+			if (App->modClient->message_request_timer / CLOCKS_PER_SEC + 3 < std::clock() / CLOCKS_PER_SEC)
+			{
+				App->modClient->sendPacketQueryMessages(App->modMainMenu->selected_user.username.c_str());
+				App->modClient->message_request_timer = std::clock();
+			}
+		}
 	}
+
 
 
 	ImGui::End();

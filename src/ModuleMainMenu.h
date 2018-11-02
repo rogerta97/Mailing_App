@@ -21,6 +21,7 @@ public:
 	std::thread connected_thread;
 	std::thread writing_thread;
 	std::thread getusers_thread;
+	std::thread getmessages_thread;
 	User selected_user;
 private:
 	

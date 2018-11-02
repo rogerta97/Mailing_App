@@ -157,16 +157,16 @@ std::tm Application::StringToDateTime(const std::string& string)
 
 		ret.tm_year = strtoul(cursor, &end_cursor, 10);
 		cursor = end_cursor + 1; end_cursor = cursor + 2;
-		ret.tm_year = strtoul(cursor, &end_cursor, 10);
+		ret.tm_mon = strtoul(cursor, &end_cursor, 10);
 		cursor = end_cursor + 1; end_cursor = cursor + 2;
-		ret.tm_year = strtoul(cursor, &end_cursor, 10);
+		ret.tm_mday = strtoul(cursor, &end_cursor, 10);
 
 		cursor = end_cursor + 1; end_cursor = cursor + 2;
-		ret.tm_year = strtoul(cursor, &end_cursor, 10);
+		ret.tm_hour = strtoul(cursor, &end_cursor, 10);
 		cursor = end_cursor + 1; end_cursor = cursor + 2;
-		ret.tm_year = strtoul(cursor, &end_cursor, 10);
+		ret.tm_min = strtoul(cursor, &end_cursor, 10);
 		cursor = end_cursor + 1; end_cursor = cursor + 2;
-		ret.tm_year = strtoul(cursor, &end_cursor, 10);
+		ret.tm_sec = strtoul(cursor, &end_cursor, 10);
 	}
 
 	return ret;

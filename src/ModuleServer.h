@@ -70,7 +70,9 @@ private:
 
 	void onPacketReceivedWritingPing(SOCKET socket, const InputMemoryStream& stream);
 
-	void sendPacketQueryAllMessagesResponse(SOCKET socket, const std::string &username);
+	void onPacketReceivedMessagesRead(SOCKET socket, const InputMemoryStream& stream);
+
+	void sendPacketQueryAllMessagesResponse(SOCKET socket, const std::string &username, const std::string &sender);
 
 	void sendPacketQueryAllUsersResponse(SOCKET socket);
 

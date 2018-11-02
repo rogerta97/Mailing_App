@@ -19,12 +19,14 @@ public:
 	void insertMessage(const Message &message) override;
 	void insertUser(const User &user) override;
 
-	std::vector<Message> getAllMessagesReceivedByUser(const std::string &username) override;
+	std::vector<Message> getAllMessagesReceivedByUser(const std::string &username, const std::string &sender) override;
 	std::vector<User> getAllUsers() override;
 	User getUserData(const std::string &username);
 
 	void sendConnectedPing(const std::string &username) {};
 	void sendWritingPing(const std::string &username) {};
+
+	void UpdateReadMessages(const std::string &sender, const std::string &receiver) {};
 
 	void Connect() {};
 	void Disconnect() {};
