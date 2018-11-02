@@ -6,6 +6,8 @@
 #include "database\MySqlDatabaseGateway.h"
 #include "imgui/imgui.h"
 
+#include <Windows.h>
+
 bool ModuleMainMenu::start()
 {
 	start_time = std::clock();
@@ -32,8 +34,11 @@ void sendWritingPingThread()
 	{
 		if (App->modClient->writing_ping_timer / CLOCKS_PER_SEC + 3 < std::clock() / CLOCKS_PER_SEC)
 		{
-			App->modClient->sendPacketWritingPing();
-			App->modClient->writing_ping_timer = std::clock();
+			if (App->modMainMenu->writing)
+			{
+				App->modClient->sendPacketWritingPing();
+				App->modClient->writing_ping_timer = std::clock();
+			}
 		}
 	}
 }
@@ -134,14 +139,8 @@ bool ModuleMainMenu::update()
 					warning_message = "Username not found.";
 				else if (user.password != password_buffer)
 					warning_message = "Incorrect password.";
-				else {
-					App->modClient->senderBuf = user_buffer;
-					App->modClient->messengerState = MessengerState::SendingLogin;
-					connected_thread = std::thread(sendConnectedPingThread);
-					getusers_thread = std::thread(requestUsersThread);
-					//getmessages_thread = std::thread(requestMessagesThread);
+				else 
 					logged = true;
-				}
 			}
 
 			ImGui::SameLine();
@@ -149,24 +148,21 @@ bool ModuleMainMenu::update()
 			{
 				User user = App->modServer->database()->getUserData(user_buffer);
 				if (user.username.length() == 0)
-				{
-					User new_user;
-					new_user.username = user_buffer;
-					new_user.password = password_buffer;
-					App->modServer->database()->insertUser(new_user);
-
-					App->modClient->senderBuf = user_buffer;
-					App->modClient->messengerState = MessengerState::SendingLogin;
-					connected_thread = std::thread(sendConnectedPingThread);
-					getusers_thread = std::thread(requestUsersThread);
-					//getmessages_thread = std::thread(requestMessagesThread);
 					logged = true;
-				}
 				else
 					warning_message = "An user with that username already exists.";
 			}
 
-			if (warning_message.length() != 0)
+			if (logged)
+			{
+				App->modClient->senderBuf = user_buffer;
+				App->modClient->sendPacketLogin(user_buffer);
+				connected_thread = std::thread(sendConnectedPingThread);
+				getusers_thread = std::thread(requestUsersThread);
+				getmessages_thread = std::thread(requestMessagesThread);
+				writing_thread = std::thread(sendWritingPingThread);
+			}
+			else if (warning_message.length() != 0)
 				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), warning_message.c_str());
 
 			break;
@@ -220,19 +216,39 @@ bool ModuleMainMenu::update()
 			}
 		}
 
-		if (App->modMainMenu->selected_user.username.size() > 0)
-		{
-			if (App->modClient->message_request_timer / CLOCKS_PER_SEC + 3 < std::clock() / CLOCKS_PER_SEC)
-			{
-				App->modClient->sendPacketQueryMessages(App->modMainMenu->selected_user.username.c_str());
-				App->modClient->message_request_timer = std::clock();
-			}
-		}
+		if (selected_user.username.size() > 0)
+			DrawChatWindow();
 	}
-
-
 
 	ImGui::End();
 
 	return true;
+}
+
+
+void ModuleMainMenu::DrawChatWindow()
+{
+	ImGui::Begin(selected_user.username.c_str());
+	for (auto it = App->modClient->messages.begin(); it != App->modClient->messages.end(); it++)
+	{
+		if ((*it).senderUsername == App->modClient->senderBuf)
+			ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), (App->modClient->senderBuf + ':').c_str());
+		else if ((*it).senderUsername == selected_user.username)
+			ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), (selected_user.username + ':').c_str());
+
+		ImGui::SameLine();
+		ImGui::Text((*it).body.c_str());
+		ImGui::SameLine();
+		ImGui::Text(App->DateTimeToString((*it).sent_time, false).c_str());
+	}
+
+	ImGui::InputTextMultiline("Message", messageBuf, sizeof(messageBuf));
+	ImGui::SameLine();
+	if (GetKeyState(VK_RETURN) & 0x8000 || ImGui::Button("Send"))
+	{
+		if (std::string(messageBuf).size() > 0)
+			App->modClient->sendPacketSendMessage(selected_user.username.c_str(), messageBuf);
+	}
+
+	ImGui::End();
 }

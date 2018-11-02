@@ -183,7 +183,7 @@ void ModuleServer::sendPacketQueryAllMessagesResponse(SOCKET socket, const std::
 		outStream.Write(messages[i].senderUsername);
 		outStream.Write(messages[i].receiverUsername);
 		outStream.Write(messages[i].body);
-		outStream.Write(App->DateTimeToString(messages[i].sent_time));
+		outStream.Write(App->DateTimeToString(messages[i].sent_time, false));
 		outStream.Write<bool>(messages[i].is_read);
 		outStream.Write<bool>(messages[i].is_received);
 	}

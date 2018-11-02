@@ -45,7 +45,7 @@ void MySqlDatabaseGateway::insertMessage(const Message & message)
 
 			// insert some messages
 			db->sql(stringFormat("INSERT INTO messages (sender, receiver, body, sent_time, is_received, is_read) VALUES('%s', '%s', '%s', '%s', false, false)",
-				message.senderUsername.c_str(), message.receiverUsername.c_str(), message.body.c_str()).c_str());
+				message.senderUsername.c_str(), message.receiverUsername.c_str(), message.body.c_str(), App->DateTimeToString(App->getDateTime()).c_str()).c_str());
 		}
 		else
 			Reconnect();
@@ -145,7 +145,7 @@ std::vector<Message> MySqlDatabaseGateway::getAllMessagesReceivedByUser(const st
 			std::string sqlStatement;
 
 			// consult all messages
-			DBResultSet res = db->sql(stringFormat("select* from messages where(receiver = '%s' or sender = '%s')", username.c_str(), sender.c_str()).c_str());
+			DBResultSet res = db->sql(stringFormat("select* from messages where(receiver = '%s' or sender = '%s' or receiver = '%s' or sender = '%s')", username.c_str(), username.c_str(), sender.c_str(), sender.c_str()).c_str());
 
 			// fill the array of messages
 			for (auto & messageRow : res.rows)

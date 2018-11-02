@@ -14,18 +14,6 @@ enum class ClientState
 	Connected,
 	Disconnecting
 };
-
-// Current screen of the messenger app
-enum class MessengerState
-{
-	SendingLogin,
-	RequestingMessages,
-	ReceivingMessages,
-	ShowingMessages,
-	ComposingMessage,
-	SendingMessage
-};
-
 void sendConnectedPingThread();
 void sendWritingPingThread();
 
@@ -46,6 +34,10 @@ public:
 	void sendPacketUsersRequest();
 
 	void sendPacketQueryMessages(const char *sender);
+
+	void sendPacketLogin(const char *username);
+
+	void sendPacketSendMessage(const char *receiver, const char *message);
 public:
 
 	// State of the client
@@ -57,16 +49,14 @@ public:
 	clock_t user_request_timer = 0;
 	clock_t message_request_timer = 0;
 
-	// Current screen of the messenger application
-	MessengerState messengerState = MessengerState::SendingLogin;
-
 	std::vector<User> current_users;
+
+	// All messages in the client inbox
+	std::vector<Message> messages;
 
 private:
 
 	// Methods involving serialization / deserialization (contain TODOs)
-
-	void updateMessenger();
 
 	void onPacketReceived(const InputMemoryStream &stream);
 
@@ -74,18 +64,9 @@ private:
 
 	void onPacketReceivedAllUsersResponse(const InputMemoryStream &stream);
 
-	void sendPacketLogin(const char *username);
-
-	void sendPacketSendMessage(const char *receiver,  const char *message);
-
 	void sendPacketMessagesRead(const char *sender);
 
 	void sendPacket(const OutputMemoryStream &stream);
-
-	
-	// GUI
-
-	void updateGUI();
 
 
 	// Low-level networking stuff
@@ -100,14 +81,6 @@ private:
 
 	// Socket to connect to the server
 	SOCKET connSocket;
-
-	// All messages in the client inbox
-	std::vector<Message> messages;
-
-	// Composing Message buffers (for IMGUI)
-	char receiverBuf[64]; // Buffer for the receiver
-	char messageBuf[4096];// Buffer for the message
-
 
 	// Send and receive buffers (low-level stuff)
 

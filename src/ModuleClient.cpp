@@ -12,7 +12,6 @@
 
 bool ModuleClient::update()
 {
-	updateGUI();
 
 	switch (state)
 	{
@@ -21,7 +20,6 @@ bool ModuleClient::update()
 		break;
 	case ClientState::Connected:
 		handleIncomingData();
-		updateMessenger();
 		handleOutgoingData();
 		break;
 	case ClientState::Disconnecting:
@@ -38,33 +36,6 @@ bool ModuleClient::cleanUp()
 {
 	disconnectFromServer();
 	return true;
-}
-
-void ModuleClient::updateMessenger()
-{
-	switch (messengerState)
-	{
-	case MessengerState::SendingLogin:
-		sendPacketLogin(senderBuf.c_str());
-		break;
-	case MessengerState::RequestingMessages:
-		// Idle, do nothing
-		break;
-	case MessengerState::ReceivingMessages:
-		// Idle, do nothing
-		break;
-	case MessengerState::ShowingMessages:
-		// Idle, do nothing
-		break;
-	case MessengerState::ComposingMessage:
-		// Idle, do nothing
-		break;
-	case MessengerState::SendingMessage:
-		sendPacketSendMessage(receiverBuf, messageBuf);
-		break;
-	default:
-		break;
-	}
 }
 
 void ModuleClient::onPacketReceived(const InputMemoryStream & stream)
@@ -112,7 +83,6 @@ void ModuleClient::onPacketReceivedQueryAllMessagesResponse(const InputMemoryStr
 		messages.push_back(m);
 	}
 
-	messengerState = MessengerState::ShowingMessages;
 }
 
 
@@ -145,7 +115,6 @@ void ModuleClient::sendPacketLogin(const char * username)
 	stream.Write(std::string(username));
 	sendPacket(stream);
 
-	messengerState = MessengerState::RequestingMessages;
 }
 
 void ModuleClient::sendPacketMessagesRead(const char *sender)
@@ -167,7 +136,6 @@ void ModuleClient::sendPacketQueryMessages(const char *sender)
 	stream.Write(std::string(sender));
 	sendPacket(stream);
 
-	messengerState = MessengerState::ReceivingMessages;
 }
 
 
@@ -207,7 +175,6 @@ void ModuleClient::sendPacketSendMessage(const char * receiver,const char *messa
 	stream.Write(std::string(message));
 	sendPacket(stream);
 
-	messengerState = MessengerState::RequestingMessages;
 }
 
 // This function is done for you: Takes the stream and schedules its internal buffer to be sent
@@ -222,95 +189,6 @@ void ModuleClient::sendPacket(const OutputMemoryStream & stream)
 	memcpy(&sendBuffer[oldSize] + HEADER_SIZE, stream.GetBufferPtr(), stream.GetSize());
 }
 
-
-// GUI: Modify this to add extra features...
-
-void ModuleClient::updateGUI()
-{
-	ImGui::Begin("Client Window");
-
-	if (state == ClientState::Disconnected)
-	{
-		if (ImGui::CollapsingHeader("Server data", ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			// IP address
-			static char ipBuffer[64] = "127.0.0.1";
-			ImGui::InputText("IP", ipBuffer, sizeof(ipBuffer));
-
-			// Port
-			static int port = 3306;
-			ImGui::InputInt("Port", &port);
-
-			// Connect button
-			ImGui::InputText("Login name", (char*)senderBuf.c_str(), sizeof(senderBuf));
-
-			if (ImGui::Button("Connect"))
-			{
-				if (state == ClientState::Disconnected)
-				{
-					state = ClientState::Connecting;
-				}
-			}
-		}
-	}
-	else if (state == ClientState::Connected)
-	{
-		// Disconnect button
-		if (ImGui::Button("Disconnect"))
-		{
-			if (state == ClientState::Connected)
-			{
-				state = ClientState::Disconnecting;
-			}
-		}
-
-		if (messengerState == MessengerState::ComposingMessage)
-		{
-			ImGui::InputText("Receiver", receiverBuf, sizeof(receiverBuf));
-			ImGui::InputTextMultiline("Message", messageBuf, sizeof(messageBuf));
-			if (ImGui::Button("Send"))
-			{
-				messengerState = MessengerState::SendingMessage;
-			}
-			if (ImGui::Button("Discard"))
-			{
-				messengerState = MessengerState::ShowingMessages;
-			}
-		}
-		else if (messengerState == MessengerState::ShowingMessages)
-		{
-			if (ImGui::Button("Compose message"))
-			{
-				messengerState = MessengerState::ComposingMessage;
-			}
-
-			if (ImGui::Button("Refresh inbox"))
-			{
-				messengerState = MessengerState::RequestingMessages;
-			}
-
-			ImGui::Text("Inbox:");
-
-			if (messages.empty()) {
-				ImGui::Text(" - Your inbox is empty.");
-			}
-
-			/*int i = 0;
-			for (auto &message : messages)
-			{
-				ImGui::PushID(i++);
-				if (ImGui::TreeNode(&message, "%s - %s", message.senderUsername.c_str(), message.subject.c_str()))
-				{
-					ImGui::TextWrapped("%s", message.body.c_str());
-					ImGui::TreePop();
-				}
-				ImGui::PopID();
-			}*/
-		}
-	}
-
-	ImGui::End();
-}
 
 
 
@@ -345,7 +223,6 @@ void ModuleClient::connectToServer()
 		LOG("Server connected to %s:%d", App->modServer->serverIP, App->modServer->port);
 
 		App->modServer->database()->Connect();
-		messengerState = MessengerState::SendingLogin;
 	}
 
 	// Set non-blocking socket

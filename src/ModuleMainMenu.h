@@ -14,6 +14,8 @@ public:
 
 	bool update() override;
 
+	void DrawChatWindow();
+
 public:
 
 	bool writing = false;
@@ -23,10 +25,13 @@ public:
 	std::thread getusers_thread;
 	std::thread getmessages_thread;
 	User selected_user;
+
 private:
 	
 	bool logged = false;
 	bool hosting_server = false;
 	clock_t start_time;
 	std::string warning_message;
+
+	char messageBuf[4096];// Buffer for the message
 };

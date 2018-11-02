@@ -128,21 +128,26 @@ bool Application::CompareDateTime(const tm& datetime_a, const tm& datetime_b, in
 	return false;
 }
 
-std::string Application::DateTimeToString(const tm& date_time)
+std::string Application::DateTimeToString(const tm& date_time, bool add_1900)
 {
 	std::string ret;
 
-	ret += (std::to_string(date_time.tm_year + 1900) + '/');
-	ret += (std::to_string(date_time.tm_mon) + '/');
+	ret += (std::to_string(date_time.tm_year + (add_1900 ? 1900 : 0)) + '/');
 
-	if(date_time.tm_mday >= 10)
-		ret += (std::to_string(date_time.tm_mday) + ' ');
-	else
-		ret += ('0' + std::to_string(date_time.tm_mday) + ' ');
+	if (date_time.tm_mon >= 10) ret += (std::to_string(date_time.tm_mon) + '/');
+	else						ret += ('0' + std::to_string(date_time.tm_mon) + '/');
 
-	ret += (std::to_string(date_time.tm_hour) + ':');
-	ret += (std::to_string(date_time.tm_min) + ':');
-	ret += std::to_string(date_time.tm_sec);
+	if(date_time.tm_mday >= 10) ret += (std::to_string(date_time.tm_mday) + ' ');
+	else						ret += ('0' + std::to_string(date_time.tm_mday) + ' ');
+
+	if (date_time.tm_hour >= 10) ret += (std::to_string(date_time.tm_hour) + ':');
+	else						ret += ('0' + std::to_string(date_time.tm_hour) + ':');
+
+	if (date_time.tm_min >= 10) ret += (std::to_string(date_time.tm_min) + ':');
+	else						ret += ('0' + std::to_string(date_time.tm_min) + ':');
+
+	if (date_time.tm_sec >= 10) ret += (std::to_string(date_time.tm_sec));
+	else						ret += ('0' + std::to_string(date_time.tm_sec));
 
 	return ret;
 }
