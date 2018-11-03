@@ -4,16 +4,30 @@
 
 bool ModuleLogView::update()
 {
-	ImGui::Begin("Log View");
+	ImGui::Begin("Client log");
 
-	for (int i = 0; i < logLineCount(); ++i)
+	for (int i = 0; i < ClientlogLineCount(); ++i)
 	{
-		const char *line = logLineAt(i);
+		const char *line = ClientlogLineAt(i);
 
 		ImGui::TextWrapped("%s", line);
 	}
 	
 	ImGui::End();
+
+	if (ServerlogLineCount() > 0)
+	{
+		ImGui::Begin("Server log");
+
+		for (int i = 0; i < ServerlogLineCount(); ++i)
+		{
+			const char *line = ServerlogLineAt(i);
+
+			ImGui::TextWrapped("%s", line);
+		}
+
+		ImGui::End();
+	}
 
 	return true;
 }

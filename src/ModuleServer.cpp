@@ -70,30 +70,30 @@ void ModuleServer::onPacketReceived(SOCKET socket, const InputMemoryStream & str
 	{
 	case PacketType::LoginRequest:
 		onPacketReceivedLogin(socket, stream);
-		LOG("onPacketReceived() - packetType: LoginRequest");
+		SERVERLOG("onPacketReceived() - packetType: LoginRequest");
 		break;
 	case PacketType::QueryAllMessagesRequest:
 		onPacketReceivedQueryAllMessages(socket, stream);
-		LOG("onPacketReceived() - packetType: QueryAllMessagesRequest");
+		SERVERLOG("onPacketReceived() - packetType: QueryAllMessagesRequest");
 		break;
 	case PacketType::SendMessageRequest:
 		onPacketReceivedSendMessage(socket, stream);
-		LOG("onPacketReceived() - packetType: SendMessageRequest");
+		SERVERLOG("onPacketReceived() - packetType: SendMessageRequest");
 		break;
 	case PacketType::ConnectedPing:
 		onPacketReceivedConnectionPing(socket, stream);
-		LOG("onPacketReceived() - packetType: ConnectedPing");
+		SERVERLOG("onPacketReceived() - packetType: ConnectedPing");
 		break;
 	case PacketType::WritingPing:
 		onPacketReceivedWritingPing(socket, stream);
-		LOG("onPacketReceived() - packetType: WritingPing");
+		SERVERLOG("onPacketReceived() - packetType: WritingPing");
 		break; 
 	case PacketType::AllUsersRequest:
 		onPacketReceivedQueryAllUsers(socket, stream);
-		LOG("onPacketReceived() - packetType: AllUsersRequest");
+		SERVERLOG("onPacketReceived() - packetType: AllUsersRequest");
 		break; 
 	default:
-		LOG("Unknown packet type received");
+		SERVERLOG("Unknown packet type received");
 		break;
 	}
 }
@@ -264,7 +264,7 @@ void ModuleServer::startServer()
 	// Next state
 	state = ServerState::Running;
 
-	LOG("Sever listening port %d", port);
+	SERVERLOG("Sever listening port %d", port);
 }
 
 void ModuleServer::stopServer()
@@ -279,7 +279,7 @@ void ModuleServer::stopServer()
 
 	state = ServerState::Off;
 
-	LOG("Server off");
+	SERVERLOG("Server off");
 }
 
 void ModuleServer::handleIncomingData()
@@ -299,7 +299,7 @@ void ModuleServer::handleIncomingData()
 				printWSErrorAndExit("accept()");
 			}
 			createClientStateInfoForSocket(connectedSocket);
-			LOG("New connection accepted");
+			SERVERLOG("New connection accepted");
 		}
 		else
 		{
@@ -337,7 +337,7 @@ void ModuleServer::handleIncomingDataFromClient(ClientStateInfo & info)
 		else
 		{
 			printWSError("recv() - Error: Disconnecting client");
-			LOG("recv() - Error: Disconnecting client: %s", info.loginName.c_str());
+			SERVERLOG("recv() - Error: Disconnecting client: %s", info.loginName.c_str());
 			info.invalid = true;
 		}
 	}
@@ -345,7 +345,7 @@ void ModuleServer::handleIncomingDataFromClient(ClientStateInfo & info)
 	{
 		if (res == 0)
 		{
-			LOG("Client disconnected flawlessly - client: %s", info.loginName.c_str());
+			SERVERLOG("Client disconnected flawlessly - client: %s", info.loginName.c_str());
 			info.invalid = true;
 			return;
 		}
@@ -388,7 +388,7 @@ void ModuleServer::handleOutgoingDataToClient(ClientStateInfo & info)
 			else
 			{
 				printWSError("send() - Error: Disconnecting client");
-				LOG("send() - Error: Disconnecting client: %s", info.loginName.c_str());
+				SERVERLOG("send() - Error: Disconnecting client: %s", info.loginName.c_str());
 				info.invalid = true;
 			}
 		}

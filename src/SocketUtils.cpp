@@ -19,7 +19,7 @@ void printWSError(const char *msg)
 		0,
 		NULL);
 	fprintf(stderr, "%s: %S\n", msg, s);
-	LOG("%s: %S", msg, s);
+	SERVERLOG("%s: %S", msg, s);
 	LocalFree(s);
 }
 

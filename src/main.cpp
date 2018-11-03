@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 			if (App != nullptr) {
 				state = MainState::Start;
 			} else {
-				LOG("Create failed");
+				CLIENTLOG("Create failed");
 				state = MainState::Fail;
 			}
 			break;
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 			if (App->start()) {
 				state = MainState::Loop;
 			} else {
-				LOG("Start failed");
+				CLIENTLOG("Start failed");
 				state = MainState::Fail;
 			}
 			break;
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 					state = MainState::CleanUp;
 				}
 			} else {
-				LOG("Loop failed");
+				CLIENTLOG("Loop failed");
 				state = MainState::Fail;
 			}
 			break;
@@ -60,13 +60,13 @@ int main(int argc, char **argv)
 				state = MainState::Exit;
 				result = EXIT_SUCCESS;
 			} else {
-				LOG("CleanUp failed");
+				CLIENTLOG("CleanUp failed");
 				state = MainState::Fail;
 			}
 			break;
 
 		case MainState::Fail:
-			LOG("Application failed :-(");
+			CLIENTLOG("Application failed :-(");
 			break;
 
 		case MainState::Exit:

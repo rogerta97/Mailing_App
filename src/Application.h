@@ -42,7 +42,7 @@ public:
 
 	tm getDateTime();
 
-	bool CompareDateTime(const tm& datetime_a, const tm& datetime_b, int margin_in_seconds = 6);
+	bool CompareDateTime(const tm& datetime_a, const tm& datetime_b, int margin_in_seconds = 15);
 
 private:
 

@@ -31,5 +31,7 @@ private:
 	clock_t start_time;
 	std::string warning_message;
 
-	char messageBuf[4096];// Buffer for the message
+	char messageBuf[200];// Buffer for the message
+	unsigned int message_count = 0;
+	bool scroll_to_bottom = true;
 };

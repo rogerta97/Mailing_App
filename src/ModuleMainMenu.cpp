@@ -49,12 +49,16 @@ void AuxiliarThread()
 bool ModuleMainMenu::start()
 {
 	start_time = std::clock();
+	scroll_to_bottom = true;
 	return true;
 }
 
 bool ModuleMainMenu::update()
 {
 	ImGui::Begin("Main menu");
+
+	if(hosting_server)
+		ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), "Hosting server");
 
 	clock_t current_time = clock() - start_time;
 
@@ -63,12 +67,8 @@ bool ModuleMainMenu::update()
 		switch (App->modClient->state)
 		{
 		case ClientState::Connecting:
-			if (current_time % 1000 < 330)
-				ImGui::Text("Connecting to server.");
-			else if (current_time % 1000 > 330 && current_time % 1000 < 660)
-				ImGui::Text("Connecting to server..");
-			else
-				ImGui::Text("Connecting to server...");
+
+			ImGui::Text("Connecting to server...");
 
 			if (current_time / CLOCKS_PER_SEC > 5 && !hosting_server)
 			{
@@ -100,7 +100,6 @@ bool ModuleMainMenu::update()
 				App->modClient->state = ClientState::Connecting;
 				App->modClient->setActive(true);
 				App->modServer->setActive(true);
-				start_time = std::clock();
 			}
 
 			break;
@@ -139,6 +138,7 @@ bool ModuleMainMenu::update()
 				App->modClient->senderBuf = user_buffer;
 				App->modClient->sendPacketLogin(user_buffer);
 				aux_thread = std::thread(AuxiliarThread);
+				start_time = std::clock();
 			}
 			else if (warning_message.length() != 0)
 				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), warning_message.c_str());
@@ -157,46 +157,54 @@ bool ModuleMainMenu::update()
 		static int selected = -1;
 		int count = 0;
 
-		for (auto it = App->modClient->current_users.begin(); it != App->modClient->current_users.end(); it++)
+		if (App->modClient->current_users.empty())
+			ImGui::Text("Loading...");
+		else
 		{
-			if (App->modClient->senderBuf == (*it).username)
-				continue;
-
-			if (App->CompareDateTime(current_time, (*it).last_connected))
+			for (auto it = App->modClient->current_users.begin(); it != App->modClient->current_users.end(); it++)
 			{
-				count++;
-				if (ImGui::Selectable((*it).username.c_str(), selected == count))
+				if (App->modClient->senderBuf == (*it).username)
+					continue;
+
+				if (App->CompareDateTime(current_time, (*it).last_connected))
 				{
-					selected = count;
-					selected_user = *it;
-				}
-				if (App->CompareDateTime(current_time, (*it).last_writing))
-				{
-					ImGui::SameLine();
-					ImGui::Text("Writing...");
+					count++;
+					if (ImGui::Selectable((*it).username.c_str(), selected == count))
+					{
+						selected = count;
+						selected_user = *it;
+						start_time = std::clock();
+						App->modClient->messages.clear();
+					}
+					if (App->CompareDateTime(current_time, (*it).last_writing))
+					{
+						ImGui::SameLine();
+						ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), "(Writing...)");
+					}
 				}
 			}
-		}
 
-		ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Offline users:");
-		for (auto it = App->modClient->current_users.begin(); it != App->modClient->current_users.end(); it++)
-		{
-			if (App->modClient->senderBuf == (*it).username)
-				continue;
-
-			if (!App->CompareDateTime(current_time, (*it).last_connected))
+			ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Offline users:");
+			for (auto it = App->modClient->current_users.begin(); it != App->modClient->current_users.end(); it++)
 			{
-				count++;
-				if (ImGui::Selectable((*it).username.c_str(), selected == count))
+				if (App->modClient->senderBuf == (*it).username)
+					continue;
+
+				if (!App->CompareDateTime(current_time, (*it).last_connected))
 				{
-					selected = count;
-					selected_user = *it;
+					count++;
+					if (ImGui::Selectable((*it).username.c_str(), selected == count))
+					{
+						selected = count;
+						start_time = std::clock();
+						selected_user = *it;
+						App->modClient->messages.clear();
+					}
 				}
 			}
-		}
 
-		if (selected_user.username.size() > 0)
 			DrawChatWindow();
+		}
 	}
 
 	ImGui::End();
@@ -209,37 +217,78 @@ bool ModuleMainMenu::update()
 
 void ModuleMainMenu::DrawChatWindow()
 {
-	ImGui::Begin(selected_user.username.c_str());
-	for (auto it = App->modClient->messages.begin(); it != App->modClient->messages.end(); it++)
+	if (selected_user.username.size() == 0)
 	{
-		if ((*it).senderUsername == App->modClient->senderBuf)
-			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), (App->modClient->senderBuf + ':').c_str());
-		else if ((*it).senderUsername == selected_user.username)
-			ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), (selected_user.username + ':').c_str());
-
-		ImGui::SameLine();
-		ImGui::Text((*it).body.c_str());
-		ImGui::SameLine();
-		ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), App->DateTimeToString((*it).sent_time, false).c_str());
-
-		if ((*it).is_read)
-		{
-			ImGui::SameLine();
-			ImGui::TextColored(ImVec4(0.0f, 0.8f, 0.0f, 1.0f), "(read)");
-		}
-
-	}
-
-	ImGui::InputTextMultiline("Message", messageBuf, sizeof(messageBuf));
-
-	if (std::string(messageBuf).size() > 0)
-	{
-		writing = true;
-		if (GetKeyState(VK_RETURN) & 0x8000 || ImGui::Button("Send"))
-			App->modClient->sendPacketSendMessage(selected_user.username.c_str(), messageBuf);
+		ImGui::Begin("Chat");
+		ImGui::Text("No user selected");
+		ImGui::End();
 	}
 	else
-		writing = false;
+	{
+		ImGui::Begin("Chat");
+		if (start_time / CLOCKS_PER_SEC + 5 < std::clock() / CLOCKS_PER_SEC || !App->modClient->messages.empty())
+		{
+			if (App->modClient->messages.empty())
+				ImGui::Text("you have no messages with this user yet");
+			else
+			{
+				for (auto it = App->modClient->messages.begin(); it != App->modClient->messages.end(); it++)
+				{
+					if ((*it).senderUsername == App->modClient->senderBuf)
+						ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), (App->modClient->senderBuf + ':').c_str());
+					else if ((*it).senderUsername == selected_user.username)
+						ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), (selected_user.username + ':').c_str());
 
-	ImGui::End();
+					ImGui::SameLine();
+					ImGui::TextWrapped((*it).body.c_str());
+					ImGui::SameLine();
+					ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), App->DateTimeToString((*it).sent_time, false).c_str());
+
+					if ((*it).is_read)
+					{
+						ImGui::SameLine();
+						ImGui::TextColored(ImVec4(0.0f, 0.8f, 0.0f, 1.0f), "(read)");
+					}
+
+				}
+
+				if (message_count == 0)
+					message_count = App->modClient->messages.size();
+				else if (message_count != App->modClient->messages.size())
+					ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), "Sending...");
+
+				if (scroll_to_bottom)
+				{
+					ImGui::SetScrollHere();
+					scroll_to_bottom = false;
+				}
+			}
+
+			ImGui::SetNextWindowPos(ImVec2(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y + ImGui::GetWindowSize().y));
+			ImGui::Begin("");
+			ImGui::PushItemWidth(ImGui::GetWindowSize().x - 70);
+			ImGui::InputText("##label", messageBuf, sizeof(messageBuf));
+			ImGui::PopItemWidth();
+
+			std::string s = messageBuf;
+			writing = s.size() > 0;
+
+			ImGui::SameLine();
+			if (GetKeyState(VK_RETURN) & 0x8000 || ImGui::Button("Send"))
+			{
+				if (writing)
+				{
+					App->modClient->sendPacketSendMessage(selected_user.username.c_str(), messageBuf);
+					message_count++;
+					memset(messageBuf, 0, sizeof(messageBuf));
+					scroll_to_bottom = true;
+				}
+			}
+			ImGui::End();
+		}
+		else
+			ImGui::Text("Loading...");
+
+		ImGui::End();
+	}
 }

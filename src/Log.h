@@ -1,9 +1,18 @@
 #pragma once
 
-#define LOG(format, ...) log(__FILE__, __LINE__, format, __VA_ARGS__)
+#define CLIENTLOG(format, ...) Clientlog(__FILE__, __LINE__, format, __VA_ARGS__)
 
-void log(const char file[], int line, const char* format, ...);
+#define SERVERLOG(format, ...) Serverlog(__FILE__, __LINE__, format, __VA_ARGS__)
 
-int logLineCount();
+void Clientlog(const char file[], int line, const char* format, ...);
 
-const char* logLineAt(int index);
+int ClientlogLineCount();
+
+const char* ClientlogLineAt(int index);
+
+void Serverlog(const char file[], int line, const char* format, ...);
+
+int ServerlogLineCount();
+
+const char* ServerlogLineAt(int index);
+

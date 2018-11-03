@@ -68,13 +68,13 @@ DBResultSet DBConnection::sql(const char *query, ...)
 
 	// Process data  
 	if (!(retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO)) {
-		LOG("Could not allocate a statement handle.");
+		SERVERLOG("Could not allocate a statement handle.");
 		return resultSet;
 	}
 
 
 	//output
-	LOG("Executing SQL query: %s", query);
+	SERVERLOG("Executing SQL query: %s", query);
 
 	//if there is a problem executing the query then exit application
 	//else display query result
@@ -87,9 +87,9 @@ DBResultSet DBConnection::sql(const char *query, ...)
 		SQLCHAR outMessageText[256];
 		SQLSMALLINT outMessageTextLen;
 		SQLGetDiagRec(SQL_HANDLE_STMT, sqlStatementHandle, 1, outSQLState, &outNativeError, outMessageText, 256, &outMessageTextLen);
-		LOG("Error querying SQL Server");
-		LOG(" - SQL State: %s", outSQLState);
-		LOG(" - Error Test: %s", outMessageText);
+		SERVERLOG("Error querying SQL Server");
+		SERVERLOG(" - SQL State: %s", outSQLState);
+		SERVERLOG(" - Error Test: %s", outMessageText);
 	}
 	else
 	{
@@ -197,7 +197,7 @@ bool DBConnection::connect(
 	// Allocate statement handle  
 	if (retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO)
 	{
-		LOG("Connection succesful.");
+		SERVERLOG("Connection succesful.");
 		//std::cout << OutConnStr << endl; // Connection information, no need to print it!
 		return true;
 	}
@@ -208,9 +208,9 @@ bool DBConnection::connect(
 		SQLCHAR outMessageText[256];
 		SQLSMALLINT outMessageTextLen;
 		SQLGetDiagRec(SQL_HANDLE_DBC, sqlConnHandle, 1, outSQLState, &outNativeError, outMessageText, 256, &outMessageTextLen);
-		LOG("Could not connect to the database.");
-		LOG(" - SQL State: %s", outSQLState);
-		LOG(" - Error Test: %s", outMessageText);
+		SERVERLOG("Could not connect to the database.");
+		SERVERLOG(" - SQL State: %s", outSQLState);
+		SERVERLOG(" - Error Test: %s", outMessageText);
 		disconnect();
 		return false;
 	}

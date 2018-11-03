@@ -51,14 +51,14 @@ void ModuleClient::onPacketReceived(const InputMemoryStream & stream)
 	{
 	case PacketType::QueryAllMessagesResponse:
 		onPacketReceivedQueryAllMessagesResponse(stream);
-		LOG("onPacketReceived() - packetType: QueryAllMessagesResponse");
+		CLIENTLOG("onPacketReceived() - packetType: QueryAllMessagesResponse");
 		break;
 	case PacketType::AllUsersResponse:
 		onPacketReceivedAllUsersResponse(stream);
-		LOG("onPacketReceived() - packetType: AllUsersResponse");
+		CLIENTLOG("onPacketReceived() - packetType: AllUsersResponse");
 		break;
 	default:
-		LOG("Unknown packet type received");
+		CLIENTLOG("Unknown packet type received");
 		break;
 	}
 }
@@ -209,7 +209,7 @@ void ModuleClient::connectToServer()
 	else
 	{
 		state = ClientState::Connected;
-		LOG("Server connected to %s:%d", App->modServer->serverIP, App->modServer->port);
+		CLIENTLOG("Server connected to %s:%d", App->modServer->serverIP, App->modServer->port);
 
 		App->modServer->database()->Connect();
 	}
@@ -219,7 +219,7 @@ void ModuleClient::connectToServer()
 	res = ioctlsocket(connSocket, FIONBIO, &nonBlocking);
 	if (res == SOCKET_ERROR) {
 		printWSError("ioctlsocket() non-blocking");
-		LOG("Could not set the socket in non-blocking mode.", App->modServer->serverIP, App->modServer->port);
+		CLIENTLOG("Could not set the socket in non-blocking mode.", App->modServer->serverIP, App->modServer->port);
 		state = ClientState::Disconnecting;
 	}
 
@@ -260,7 +260,7 @@ void ModuleClient::handleIncomingData()
 		if (res == 0)
 		{
 			state = ClientState::Disconnecting;
-			LOG("Disconnection from server");
+			CLIENTLOG("Disconnection from server");
 			return;
 		}
 
