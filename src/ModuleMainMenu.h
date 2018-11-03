@@ -15,6 +15,9 @@ public:
 	bool update() override;
 
 	void DrawChatWindow();
+	// GUI
+
+	void DrawConnectionConfig();
 
 public:
 

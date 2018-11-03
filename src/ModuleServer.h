@@ -15,6 +15,27 @@ enum class ServerState
 	Stopping
 };
 
+// Client buffers
+struct ClientStateInfo
+{
+	// Client socket
+	SOCKET socket;
+
+	// Recv buffer state
+	size_t recvPacketHead = 0;
+	size_t recvByteHead = 0;
+	std::vector<uint8_t> recvBuffer;
+
+	// Send buffer state
+	size_t sendHead = 0;
+	std::vector<uint8_t> sendBuffer;
+
+	// Login
+	std::string loginName;
+
+	// bool should it be deleted?
+	bool invalid = false;
+};
 
 class IDatabaseGateway;
 
@@ -50,7 +71,10 @@ public:
 	// IP address of the server
 	char serverIP[32] = "127.0.0.1";
 
-	bool draw_config = false;
+	bool g_SimulateDatabaseConnection = false;
+
+	// List with all connected clients
+	std::list<ClientStateInfo> clients;
 
 private:
 
@@ -76,12 +100,6 @@ private:
 
 	void sendPacket(SOCKET socket, OutputMemoryStream& stream);
 
-
-	// GUI
-
-	void DrawConnectionConfig();
-
-
 	// Low level networking stuff
 
 	void startServer();
@@ -91,8 +109,6 @@ private:
 	void handleIncomingData();
 
 	void handleOutgoingData();
-
-	struct ClientStateInfo;
 
 	void handleIncomingDataFromClient(ClientStateInfo &info);
 
@@ -120,28 +136,6 @@ private:
 	// Special socket to accept incoming client connections.
 	SOCKET listenSocket;
 
-	// Client buffers
-	struct ClientStateInfo
-	{
-		// Client socket
-		SOCKET socket;
-
-		// Recv buffer state
-		size_t recvPacketHead = 0;
-		size_t recvByteHead = 0;
-		std::vector<uint8_t> recvBuffer;
 	
-		// Send buffer state
-		size_t sendHead = 0;
-		std::vector<uint8_t> sendBuffer;
 
-		// Login
-		std::string loginName;
-
-		// bool should it be deleted?
-		bool invalid = false;
-	};
-
-	// List with all connected clients
-	std::list<ClientStateInfo> clients;
 };

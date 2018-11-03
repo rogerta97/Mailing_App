@@ -6,9 +6,6 @@
 #include "database/SimulatedDatabaseGateway.h"
 #include "Application.h"
 
-static bool g_SimulateDatabaseConnection = false;
-
-
 #define HEADER_SIZE sizeof(uint32_t)
 #define RECV_CHUNK_SIZE 4096
 
@@ -27,8 +24,6 @@ ModuleServer::~ModuleServer()
 
 bool ModuleServer::update()
 {
-	if (draw_config)
-		DrawConnectionConfig();
 
 	switch (state)
 	{
@@ -146,8 +141,8 @@ void ModuleServer::sendPacketQueryAllUsersResponse(SOCKET socket)
 	{
 		outStream.Write(users[i].username);
 		outStream.Write(users[i].password);
-		outStream.Write(App->DateTimeToString(users[i].last_connected, false));
-		outStream.Write(App->DateTimeToString(users[i].last_writing, false));
+		outStream.Write(App->DateTimeToString(users[i].last_connected));
+		outStream.Write(App->DateTimeToString(users[i].last_writing));
 	}
 
 	sendPacket(socket, outStream);
@@ -166,7 +161,7 @@ void ModuleServer::sendPacketQueryAllMessagesResponse(SOCKET socket, const std::
 		outStream.Write(messages[i].senderUsername);
 		outStream.Write(messages[i].receiverUsername);
 		outStream.Write(messages[i].body);
-		outStream.Write(App->DateTimeToString(messages[i].sent_time, false));
+		outStream.Write(App->DateTimeToString(messages[i].sent_time));
 		outStream.Write<bool>(messages[i].is_read);
 	}
 
@@ -180,6 +175,7 @@ void ModuleServer::onPacketReceivedSendMessage(SOCKET socket, const InputMemoryS
 	stream.Read(message.senderUsername);
 	stream.Read(message.receiverUsername);
 	stream.Read(message.body);
+	message.sent_time = App->getDateTime();
 
 	// Insert the message in the database
 	database()->insertMessage(message);
@@ -196,33 +192,6 @@ void ModuleServer::sendPacket(SOCKET socket, OutputMemoryStream & stream)
 	//std::copy(stream.GetBufferPtr(), stream.GetBufferPtr() + stream.GetSize(), &client.sendBuffer[oldSize] + HEADER_SIZE);
 	memcpy(&client.sendBuffer[oldSize] + HEADER_SIZE, stream.GetBufferPtr(), stream.GetSize());
 }
-
-
-
-// GUI: Modify this to add extra features...
-
-void ModuleServer::DrawConnectionConfig()
-{
-	ImGui::Begin("Connection configuration", &draw_config);
-
-	// Port
-	ImGui::InputInt("Port", &port);
-
-	// Simulate database
-	ImGui::Checkbox("Simulate database", &g_SimulateDatabaseConnection);
-
-	// IP address
-	ImGui::InputText("IP", serverIP, sizeof(*serverIP));
-
-	ImGui::Text("Connected clients:");
-	for (auto & client : clients)
-		ImGui::Text(" - %s", client.loginName.c_str());
-
-	database()->updateGUI();
-
-	ImGui::End();
-}
-
 
 // Low-level networking stuff
 
@@ -425,7 +394,7 @@ void ModuleServer::createClientStateInfoForSocket(SOCKET s)
 	clients.emplace_back(clientStateInfo);
 }
 
-ModuleServer::ClientStateInfo & ModuleServer::getClientStateInfoForSocket(SOCKET s)
+ClientStateInfo & ModuleServer::getClientStateInfoForSocket(SOCKET s)
 {
 	for (auto& clientStateInfo : clients)
 	{

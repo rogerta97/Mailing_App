@@ -27,7 +27,6 @@ public:
 	void sendConnectedPing(const std::string &username) override;
 	void sendWritingPing(const std::string &username) override;
 
-	virtual void updateGUI() override;
 
 	void Connect() override { db = new DBConnection(bufMySqlHost, bufMySqlPort, bufMySqlDatabase, bufMySqlUsername, bufMySqlPassword);};
 	void Disconnect() override { if(db) delete db; }

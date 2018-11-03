@@ -45,7 +45,7 @@ void MySqlDatabaseGateway::insertMessage(const Message & message)
 
 			// insert some messages
 			db->sql(stringFormat("INSERT INTO messages (sender, receiver, body, sent_time, is_read) VALUES('%s', '%s', '%s', '%s', false)",
-				message.senderUsername.c_str(), message.receiverUsername.c_str(), message.body.c_str(), App->DateTimeToString(App->getDateTime()).c_str()).c_str());
+				message.senderUsername.c_str(), message.receiverUsername.c_str(), message.body.c_str(), App->DateTimeToString(message.sent_time).c_str()).c_str());
 		}
 		else
 			Reconnect();
@@ -211,16 +211,4 @@ User MySqlDatabaseGateway::getUserData(const std::string & username)
 		Connect();
 
 	return user;
-}
-
-void MySqlDatabaseGateway::updateGUI()
-{
-	ImGui::Separator();
-
-	ImGui::Text("MySQL Server info");
-	ImGui::InputText("Host", bufMySqlHost, sizeof(bufMySqlHost));
-	ImGui::InputText("Port", bufMySqlPort, sizeof(bufMySqlPort));
-	ImGui::InputText("Database", bufMySqlDatabase, sizeof(bufMySqlDatabase));
-	ImGui::InputText("Username", bufMySqlUsername, sizeof(bufMySqlUsername));
-	ImGui::InputText("Password", bufMySqlPassword, sizeof(bufMySqlUsername), ImGuiInputTextFlags_Password);
 }

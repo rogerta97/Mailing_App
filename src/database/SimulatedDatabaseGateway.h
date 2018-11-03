@@ -23,8 +23,8 @@ public:
 	std::vector<User> getAllUsers() override;
 	User getUserData(const std::string &username);
 
-	void sendConnectedPing(const std::string &username) {};
-	void sendWritingPing(const std::string &username) {};
+	void sendConnectedPing(const std::string &username);
+	void sendWritingPing(const std::string &username);
 
 	void Connect() {};
 	void Disconnect() {};
@@ -33,4 +33,5 @@ public:
 private:
 
 	std::vector<Message> allMessages;
+	std::vector<User> allUsers;
 };

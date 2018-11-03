@@ -38,7 +38,7 @@ public:
 
 	std::tm StringToDateTime(const std::string& string);
 
-	std::string DateTimeToString(const tm& date_time, bool add_1900 = true);
+	std::string DateTimeToString(const tm& date_time);
 
 	tm getDateTime();
 

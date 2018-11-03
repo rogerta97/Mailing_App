@@ -27,8 +27,6 @@ public:
 	virtual void sendConnectedPing(const std::string &username) = 0;
 	virtual void sendWritingPing(const std::string &username) = 0;
 
-	virtual void updateGUI() { };
-
 	virtual void Connect() {};
 	virtual void Disconnect() {};
 	virtual void Reconnect() {};

@@ -133,6 +133,8 @@ bool ModuleMainMenu::update()
 					warning_message = "An user with that username already exists.";
 			}
 
+			DrawConnectionConfig();
+
 			if (logged)
 			{
 				App->modClient->senderBuf = user_buffer;
@@ -146,14 +148,11 @@ bool ModuleMainMenu::update()
 			break;
 		}
 
-		if (ImGui::Button("Connection configuration"))
-			App->modServer->draw_config = !App->modServer->draw_config;
 	}
 	else
 	{
 		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Online users:");
 		tm current_time = App->getDateTime();
-		current_time.tm_year += 1900;
 		static int selected = -1;
 		int count = 0;
 
@@ -214,6 +213,20 @@ bool ModuleMainMenu::update()
 	return true;
 }
 
+void ModuleMainMenu::DrawConnectionConfig()
+{
+	if (ImGui::CollapsingHeader("Connection configuration"))
+	{
+		// IP address
+		ImGui::InputText("IP", App->modServer->serverIP, sizeof(*App->modServer->serverIP));
+
+		// Port
+		ImGui::InputInt("Port", &App->modServer->port);
+
+		// Simulate database
+		ImGui::Checkbox("Simulate database", &App->modServer->g_SimulateDatabaseConnection);
+	}
+}
 
 void ModuleMainMenu::DrawChatWindow()
 {
@@ -232,17 +245,21 @@ void ModuleMainMenu::DrawChatWindow()
 				ImGui::Text("you have no messages with this user yet");
 			else
 			{
+				unsigned int current_msg_count = 0;
 				for (auto it = App->modClient->messages.begin(); it != App->modClient->messages.end(); it++)
 				{
 					if ((*it).senderUsername == App->modClient->senderBuf)
+					{
 						ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), (App->modClient->senderBuf + ':').c_str());
+						current_msg_count++;
+					}
 					else if ((*it).senderUsername == selected_user.username)
 						ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), (selected_user.username + ':').c_str());
 
 					ImGui::SameLine();
 					ImGui::TextWrapped((*it).body.c_str());
 					ImGui::SameLine();
-					ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), App->DateTimeToString((*it).sent_time, false).c_str());
+					ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), App->DateTimeToString((*it).sent_time).c_str());
 
 					if ((*it).is_read)
 					{
@@ -253,9 +270,10 @@ void ModuleMainMenu::DrawChatWindow()
 				}
 
 				if (message_count == 0)
-					message_count = App->modClient->messages.size();
-				else if (message_count != App->modClient->messages.size())
+					message_count = current_msg_count;
+				else if (message_count != current_msg_count)
 					ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), "Sending...");
+				
 
 				if (scroll_to_bottom)
 				{

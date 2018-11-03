@@ -113,6 +113,7 @@ tm Application::getDateTime()
 	tm date_time = tm();
 	time_t rawtime = time(&rawtime);
 	localtime_s(&date_time, (const time_t*)&rawtime);
+	date_time.tm_year += 1900;
 	return date_time;
 }
 
@@ -128,11 +129,11 @@ bool Application::CompareDateTime(const tm& datetime_a, const tm& datetime_b, in
 	return false;
 }
 
-std::string Application::DateTimeToString(const tm& date_time, bool add_1900)
+std::string Application::DateTimeToString(const tm& date_time)
 {
 	std::string ret;
 
-	ret += (std::to_string(date_time.tm_year + (add_1900 ? 1900 : 0)) + '/');
+	ret += (std::to_string(date_time.tm_year) + '/');
 
 	if (date_time.tm_mon >= 10) ret += (std::to_string(date_time.tm_mon) + '/');
 	else						ret += ('0' + std::to_string(date_time.tm_mon) + '/');
