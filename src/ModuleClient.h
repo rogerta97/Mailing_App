@@ -14,8 +14,6 @@ enum class ClientState
 	Connected,
 	Disconnecting
 };
-void sendConnectedPingThread();
-void sendWritingPingThread();
 
 class ModuleClient : public Module
 {
@@ -59,8 +57,6 @@ private:
 	void onPacketReceivedQueryAllMessagesResponse(const InputMemoryStream &stream);
 
 	void onPacketReceivedAllUsersResponse(const InputMemoryStream &stream);
-
-	void sendPacketMessagesRead(const char *sender);
 
 	void sendPacket(const OutputMemoryStream &stream);
 

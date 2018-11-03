@@ -38,7 +38,6 @@ void AuxiliarThread()
 		{
 			if ((App->modMainMenu->iteration + 300) % 400 == 0)
 			{
-				App->modServer->database()->UpdateReadMessages(App->modMainMenu->selected_user.username, App->modClient->senderBuf);
 				App->modClient->sendPacketQueryMessages(App->modMainMenu->selected_user.username.c_str());
 				App->modMainMenu->iteration++;
 			}
@@ -214,14 +213,21 @@ void ModuleMainMenu::DrawChatWindow()
 	for (auto it = App->modClient->messages.begin(); it != App->modClient->messages.end(); it++)
 	{
 		if ((*it).senderUsername == App->modClient->senderBuf)
-			ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), (App->modClient->senderBuf + ':').c_str());
+			ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), (App->modClient->senderBuf + ':').c_str());
 		else if ((*it).senderUsername == selected_user.username)
-			ImGui::TextColored(ImVec4(0.0f, 1.0f, 1.0f, 1.0f), (selected_user.username + ':').c_str());
+			ImGui::TextColored(ImVec4(0.0f, 0.0f, 1.0f, 1.0f), (selected_user.username + ':').c_str());
 
 		ImGui::SameLine();
 		ImGui::Text((*it).body.c_str());
 		ImGui::SameLine();
 		ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), App->DateTimeToString((*it).sent_time, false).c_str());
+
+		if ((*it).is_read)
+		{
+			ImGui::SameLine();
+			ImGui::TextColored(ImVec4(0.0f, 0.8f, 0.0f, 1.0f), "(read)");
+		}
+
 	}
 
 	ImGui::InputTextMultiline("Message", messageBuf, sizeof(messageBuf));

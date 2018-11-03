@@ -79,7 +79,6 @@ void ModuleClient::onPacketReceivedQueryAllMessagesResponse(const InputMemoryStr
 		stream.Read(sent_time);
 		m.sent_time = App->StringToDateTime(sent_time);
 		stream.Read<bool>(m.is_read);
-		stream.Read<bool>(m.is_received);
 		messages.push_back(m);
 	}
 
@@ -117,16 +116,6 @@ void ModuleClient::sendPacketLogin(const char * username)
 
 }
 
-void ModuleClient::sendPacketMessagesRead(const char *sender)
-{
-	OutputMemoryStream stream;
-
-	stream.Write<int>((int)PacketType::MessagesRead);
-	stream.Write(std::string(sender));
-	stream.Write(std::string(senderBuf));
-
-	sendPacket(stream);
-}
 
 void ModuleClient::sendPacketQueryMessages(const char *sender)
 {

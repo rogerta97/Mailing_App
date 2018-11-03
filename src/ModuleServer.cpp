@@ -92,10 +92,6 @@ void ModuleServer::onPacketReceived(SOCKET socket, const InputMemoryStream & str
 		onPacketReceivedQueryAllUsers(socket, stream);
 		LOG("onPacketReceived() - packetType: AllUsersRequest");
 		break; 
-	case PacketType::MessagesRead:
-		onPacketReceivedMessagesRead(socket, stream);
-		LOG("onPacketReceived() - packetType: MessagesRead");
-		break;
 	default:
 		LOG("Unknown packet type received");
 		break;
@@ -111,19 +107,6 @@ void ModuleServer::onPacketReceivedLogin(SOCKET socket, const InputMemoryStream 
 	ClientStateInfo & client = getClientStateInfoForSocket(socket);
 	client.loginName = loginName;
 }
-
-
-void ModuleServer::onPacketReceivedMessagesRead(SOCKET socket, const InputMemoryStream& stream)
-{
-	std::string sender;
-	std::string receiver;
-
-	stream.Read(sender);
-	stream.Read(receiver);
-
-	database()->UpdateReadMessages(sender, receiver);
-}
-
 
 void ModuleServer::onPacketReceivedQueryAllMessages(SOCKET socket, const InputMemoryStream & stream)
 {
@@ -185,7 +168,6 @@ void ModuleServer::sendPacketQueryAllMessagesResponse(SOCKET socket, const std::
 		outStream.Write(messages[i].body);
 		outStream.Write(App->DateTimeToString(messages[i].sent_time, false));
 		outStream.Write<bool>(messages[i].is_read);
-		outStream.Write<bool>(messages[i].is_received);
 	}
 
 	sendPacket(socket, outStream);

@@ -29,8 +29,6 @@ public:
 
 	virtual void updateGUI() override;
 
-	void UpdateReadMessages(const std::string &sender, const std::string &receiver) override;
-
 	void Connect() override { db = new DBConnection(bufMySqlHost, bufMySqlPort, bufMySqlDatabase, bufMySqlUsername, bufMySqlPassword);};
 	void Disconnect() override { if(db) delete db; }
 	void Reconnect() override { Disconnect(); Reconnect(); }

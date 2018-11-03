@@ -9,7 +9,6 @@ struct Message
 	std::string receiverUsername;
 	std::string body;
 	tm sent_time;
-	bool is_received = false;
 	bool is_read = false;
 };
 

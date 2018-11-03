@@ -44,7 +44,7 @@ void MySqlDatabaseGateway::insertMessage(const Message & message)
 			DBResultSet res;
 
 			// insert some messages
-			db->sql(stringFormat("INSERT INTO messages (sender, receiver, body, sent_time, is_received, is_read) VALUES('%s', '%s', '%s', '%s', false, false)",
+			db->sql(stringFormat("INSERT INTO messages (sender, receiver, body, sent_time, is_read) VALUES('%s', '%s', '%s', '%s', false)",
 				message.senderUsername.c_str(), message.receiverUsername.c_str(), message.body.c_str(), App->DateTimeToString(App->getDateTime()).c_str()).c_str());
 		}
 		else
@@ -115,24 +115,6 @@ void MySqlDatabaseGateway::sendWritingPing(const std::string &username)
 		Connect();
 }
 
-void MySqlDatabaseGateway::UpdateReadMessages(const std::string &sender, const std::string &receiver)
-{
-	if (db)
-	{
-		if (db->isConnected())
-		{
-			DBResultSet res;
-
-			db->sql(stringFormat("update messages set is_read = true where (sender = '%s' and receiver = '%s' and is_read = false)",
-				sender.c_str(), receiver.c_str()).c_str());
-		}
-		else
-			Reconnect();
-	}
-	else
-		Connect();
-}
-
 
 std::vector<Message> MySqlDatabaseGateway::getAllMessagesReceivedByUser(const std::string & username, const std::string &sender)
 {
@@ -155,10 +137,11 @@ std::vector<Message> MySqlDatabaseGateway::getAllMessagesReceivedByUser(const st
 				message.receiverUsername = messageRow.columns[2];
 				message.body = messageRow.columns[3];
 				message.sent_time = App->StringToDateTime(messageRow.columns[4]);
+				message.is_read = messageRow.columns[5] == "1" ? true : false;
 				messages.push_back(message);
 			}
 
-			db->sql(stringFormat("update messages set is_received = true where (receiver = '%s' and sender = '%s' and is_received = false)", username.c_str(), sender.c_str()).c_str());
+			db->sql(stringFormat("update messages set is_read = true where (receiver = '%s' and sender = '%s' and is_read = false)", username.c_str(), sender.c_str()).c_str());
 		}
 		else
 			Reconnect();

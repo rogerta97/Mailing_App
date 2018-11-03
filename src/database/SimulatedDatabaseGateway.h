@@ -26,8 +26,6 @@ public:
 	void sendConnectedPing(const std::string &username) {};
 	void sendWritingPing(const std::string &username) {};
 
-	void UpdateReadMessages(const std::string &sender, const std::string &receiver) {};
-
 	void Connect() {};
 	void Disconnect() {};
 	void Reconnect() {};

@@ -11,6 +11,5 @@ enum class PacketType : int8_t
 	ConnectedPing,
 	WritingPing,
 	AllUsersRequest,
-	AllUsersResponse,
-	MessagesRead
+	AllUsersResponse
 };
