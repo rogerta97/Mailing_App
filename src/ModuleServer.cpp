@@ -163,8 +163,8 @@ void ModuleServer::sendPacketQueryAllUsersResponse(SOCKET socket)
 	{
 		outStream.Write(users[i].username);
 		outStream.Write(users[i].password);
-		outStream.Write(App->DateTimeToString(users[i].last_connected));
-		outStream.Write(App->DateTimeToString(users[i].last_writing));
+		outStream.Write(App->DateTimeToString(users[i].last_connected, false));
+		outStream.Write(App->DateTimeToString(users[i].last_writing, false));
 	}
 
 	sendPacket(socket, outStream);
@@ -452,6 +452,8 @@ ModuleServer::ClientStateInfo & ModuleServer::getClientStateInfoForSocket(SOCKET
 			return clientStateInfo;
 		}
 	}
+	ClientStateInfo empty;
+	return empty;
 
 	//assert(nullptr && "The client for this socket does not exist.");
 }

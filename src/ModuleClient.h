@@ -44,10 +44,6 @@ public:
 	ClientState state = ClientState::Connecting;
 
 	std::string senderBuf = "loginName";   // Buffer for the sender
-	clock_t connected_ping_timer = 0;
-	clock_t writing_ping_timer = 0;
-	clock_t user_request_timer = 0;
-	clock_t message_request_timer = 0;
 
 	std::vector<User> current_users;
 

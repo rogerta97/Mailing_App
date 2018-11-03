@@ -123,7 +123,7 @@ void MySqlDatabaseGateway::UpdateReadMessages(const std::string &sender, const s
 		{
 			DBResultSet res;
 
-			db->sql(stringFormat("update messages set is_read = true where (sender = '%s' and receiver = '%s')",
+			db->sql(stringFormat("update messages set is_read = true where (sender = '%s' and receiver = '%s' and is_read = false)",
 				sender.c_str(), receiver.c_str()).c_str());
 		}
 		else
@@ -155,13 +155,10 @@ std::vector<Message> MySqlDatabaseGateway::getAllMessagesReceivedByUser(const st
 				message.receiverUsername = messageRow.columns[2];
 				message.body = messageRow.columns[3];
 				message.sent_time = App->StringToDateTime(messageRow.columns[4]);
-				if (message.receiverUsername == username)
-				{
-					message.is_received = true;
-					db->sql(stringFormat("update messages set is_received = true where (id = '%s')", messageRow.columns[0].c_str()).c_str());
-				}
 				messages.push_back(message);
 			}
+
+			db->sql(stringFormat("update messages set is_received = true where (receiver = '%s' and sender = '%s' and is_received = false)", username.c_str(), sender.c_str()).c_str());
 		}
 		else
 			Reconnect();

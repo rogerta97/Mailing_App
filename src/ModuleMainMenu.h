@@ -20,11 +20,9 @@ public:
 
 	bool writing = false;
 
-	std::thread connected_thread;
-	std::thread writing_thread;
-	std::thread getusers_thread;
-	std::thread getmessages_thread;
+	std::thread aux_thread;
 	User selected_user;
+	unsigned int iteration = 0;
 
 private:
 	

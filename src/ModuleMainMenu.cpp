@@ -8,68 +8,50 @@
 
 #include <Windows.h>
 
+
+void AuxiliarThread()
+{
+	while (true)
+	{
+		if (App->modMainMenu->iteration % 400 == 0)
+		{
+			App->modClient->sendPacketConnectedPing();
+			App->modMainMenu->iteration++;
+		}
+
+		if ((App->modMainMenu->iteration + 100) % 400 == 0)
+		{
+			if (App->modMainMenu->writing)
+			{
+				App->modClient->sendPacketWritingPing();
+				App->modMainMenu->iteration++;
+			}
+		}
+
+		if ((App->modMainMenu->iteration + 200) % 400 == 0)
+		{
+			App->modClient->sendPacketUsersRequest();
+			App->modMainMenu->iteration++;
+		}
+
+		if (App->modMainMenu->selected_user.username.size() > 0)
+		{
+			if ((App->modMainMenu->iteration + 300) % 400 == 0)
+			{
+				App->modServer->database()->UpdateReadMessages(App->modMainMenu->selected_user.username, App->modClient->senderBuf);
+				App->modClient->sendPacketQueryMessages(App->modMainMenu->selected_user.username.c_str());
+				App->modMainMenu->iteration++;
+			}
+		}
+
+	}
+}
+
 bool ModuleMainMenu::start()
 {
 	start_time = std::clock();
 	return true;
 }
-
-
-
-void sendConnectedPingThread()
-{
-	while (true)
-	{
-		if (App->modClient->connected_ping_timer / CLOCKS_PER_SEC + 3 < std::clock() / CLOCKS_PER_SEC)
-		{
-			App->modClient->sendPacketConnectedPing();
-			App->modClient->connected_ping_timer = std::clock();
-		}
-	}
-}
-
-void sendWritingPingThread()
-{
-	while (App->modMainMenu->writing)
-	{
-		if (App->modClient->writing_ping_timer / CLOCKS_PER_SEC + 3 < std::clock() / CLOCKS_PER_SEC)
-		{
-			if (App->modMainMenu->writing)
-			{
-				App->modClient->sendPacketWritingPing();
-				App->modClient->writing_ping_timer = std::clock();
-			}
-		}
-	}
-}
-
-void requestUsersThread()
-{
-	while (true)
-	{
-		if (App->modClient->user_request_timer / CLOCKS_PER_SEC + 3  < std::clock() / CLOCKS_PER_SEC)
-		{
-			App->modClient->sendPacketUsersRequest();
-			App->modClient->user_request_timer = std::clock();
-		}
-	}
-}
-
-void requestMessagesThread()
-{
-	while (true)
-	{
-		if (App->modMainMenu->selected_user.username.size() > 0)
-		{
-			if (App->modClient->message_request_timer / CLOCKS_PER_SEC + 3 < std::clock() / CLOCKS_PER_SEC)
-			{
-				App->modClient->sendPacketQueryMessages(App->modMainMenu->selected_user.username.c_str());
-				App->modClient->message_request_timer = std::clock();
-			}
-		}
-	}
-}
-
 
 bool ModuleMainMenu::update()
 {
@@ -157,10 +139,7 @@ bool ModuleMainMenu::update()
 			{
 				App->modClient->senderBuf = user_buffer;
 				App->modClient->sendPacketLogin(user_buffer);
-				connected_thread = std::thread(sendConnectedPingThread);
-				getusers_thread = std::thread(requestUsersThread);
-				getmessages_thread = std::thread(requestMessagesThread);
-				writing_thread = std::thread(sendWritingPingThread);
+				aux_thread = std::thread(AuxiliarThread);
 			}
 			else if (warning_message.length() != 0)
 				ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), warning_message.c_str());
@@ -175,6 +154,7 @@ bool ModuleMainMenu::update()
 	{
 		ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Online users:");
 		tm current_time = App->getDateTime();
+		current_time.tm_year += 1900;
 		static int selected = -1;
 		int count = 0;
 
@@ -222,6 +202,8 @@ bool ModuleMainMenu::update()
 
 	ImGui::End();
 
+	iteration++;
+
 	return true;
 }
 
@@ -239,16 +221,19 @@ void ModuleMainMenu::DrawChatWindow()
 		ImGui::SameLine();
 		ImGui::Text((*it).body.c_str());
 		ImGui::SameLine();
-		ImGui::Text(App->DateTimeToString((*it).sent_time, false).c_str());
+		ImGui::TextColored(ImVec4(0.8f, 0.8f, 0.8f, 1.0f), App->DateTimeToString((*it).sent_time, false).c_str());
 	}
 
 	ImGui::InputTextMultiline("Message", messageBuf, sizeof(messageBuf));
-	ImGui::SameLine();
-	if (GetKeyState(VK_RETURN) & 0x8000 || ImGui::Button("Send"))
+
+	if (std::string(messageBuf).size() > 0)
 	{
-		if (std::string(messageBuf).size() > 0)
+		writing = true;
+		if (GetKeyState(VK_RETURN) & 0x8000 || ImGui::Button("Send"))
 			App->modClient->sendPacketSendMessage(selected_user.username.c_str(), messageBuf);
 	}
+	else
+		writing = false;
 
 	ImGui::End();
 }
