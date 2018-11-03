@@ -83,7 +83,7 @@ bool ModuleMainMenu::update()
 			if (current_time / CLOCKS_PER_SEC > 20)
 			{
 				App->modServer->cleanUp();
-				App->modClient->state = ClientState::Disconnected;
+				App->modClient->state = ClientState::Disconnecting;
 				App->modClient->setActive(false);
 				App->modServer->setActive(false);
 			}
